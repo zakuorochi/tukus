@@ -88,20 +88,71 @@
         .camera-view {
             height: 250px; background: #1e293b; border-radius: 12px; margin-bottom: 15px;
             display: flex; align-items: center; justify-content: center; position: relative;
+            overflow: hidden; /* Added to keep video inside container */
         }
-        .scanner-frame { width: 80%; height: 80%; border: 2px dashed rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; color: white; }
+        
+        #videoElement {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .scanner-frame { 
+            width: 80%; height: 80%; 
+            border: 2px dashed rgba(255,255,255,0.7); 
+            display: flex; align-items: center; justify-content: center; 
+            color: white; 
+            z-index: 2; /* Needs to be above video */
+            position: relative;
+        }
+        
+        #canvasElement {
+             display: none; /* Hidden canvas for taking photos */
+        }
+
         .queue-container { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; }
-        .thumb { width: 60px; height: 60px; background: #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; font-size: 12px; }
+        .thumb { 
+            width: 60px; height: 60px; 
+            background: #e2e8f0; border-radius: 8px; 
+            display: flex; align-items: center; justify-content: center; 
+            position: relative; font-size: 12px; 
+            background-size: cover; /* Added for displaying thumbnail image */
+            background-position: center;
+        }
         .thumb-del { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; border: none; cursor: pointer; font-size: 10px; }
 
         /* Resultados */
         .results-box { max-height: 300px; overflow-y: auto; background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
         .question-item { padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--border); }
+        
+        /* Loading Overlay */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            border-radius: 16px;
+        }
+        .loading-overlay.active { display: flex; }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <!-- Overlay de carga global -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <h3 style="color: var(--primary);">Procesando con TUKU.OS...</h3>
+            <p>Por favor, espera.</p>
+        </div>
+
         <button class="btn-home" id="btnHome" onclick="goToScreen(1)">🏠 Volver al inicio</button>
 
         <!-- 1. Inicio -->
@@ -134,17 +185,22 @@
             <h2>Escanear Cuaderno</h2>
             <p class="subtitle">Encuadra la página. El sistema mejorará la nitidez automáticamente.</p>
             <div class="camera-view">
+                <!-- Video stream from camera -->
+                <video id="videoElement" autoplay playsinline></video>
                 <div class="scanner-frame">Vista de Cámara</div>
             </div>
+            <!-- Hidden canvas to capture the frame -->
+            <canvas id="canvasElement"></canvas>
+
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <button class="btn btn-primary" onclick="takePhoto()">📸 Capturar</button>
+                <button class="btn btn-primary" onclick="takePhotoAndProcess()">📸 Capturar</button>
                 <span id="fotoCount" style="color: var(--text-muted); font-size: 14px;">0 fotos</span>
             </div>
             <div class="queue-container" id="queueBox"></div>
             
             <div class="footer-nav">
-                <button class="btn btn-outline" onclick="goToScreen(2)">Atrás</button>
-                <button class="btn btn-primary" id="btnPhotos" disabled onclick="goToScreen(4)">Continuar</button>
+                <button class="btn btn-outline" onclick="stopCamera(); goToScreen(2)">Atrás</button>
+                <button class="btn btn-primary" id="btnPhotos" disabled onclick="stopCamera(); goToScreen(4)">Continuar</button>
             </div>
         </div>
 
@@ -160,7 +216,7 @@
             </div>
             <div class="footer-nav">
                 <button class="btn btn-outline" onclick="goToScreen(3)">Atrás</button>
-                <button class="btn btn-primary" id="btnGenerate" disabled onclick="generateQuestions()">Generar Preguntas</button>
+                <button class="btn btn-primary" id="btnGenerate" disabled onclick="handleGenerateQuestions()">Generar Preguntas</button>
             </div>
         </div>
 
@@ -172,24 +228,38 @@
                 <!-- Las preguntas se inyectarán aquí -->
             </div>
             <div class="footer-nav" style="justify-content: flex-start; gap: 15px;">
-                <button class="btn btn-primary" onclick="alert('Exportando a PDF...')">📄 Exportar PDF</button>
-                <button class="btn btn-outline" onclick="mockRegenerate()">🔄 Volver a generar</button>
+                <button class="btn btn-primary" onclick="handleExportPDF()">📄 Exportar PDF</button>
+                <button class="btn btn-outline" onclick="handleGenerateQuestions()">🔄 Volver a generar</button>
             </div>
         </div>
     </div>
 
     <script>
+        // ESTADO DE LA APLICACIÓN
         let currentGrade = null;
-        let photos = [];
+        let photos = []; // Almacenará los strings Base64 de las imágenes procesadas
         let selectedTypes = [];
+        let generatedQuestionsData = null; // Almacenará el JSON devuelto por Gemini
+        
+        // REFERENCIAS A LA CÁMARA
+        const video = document.getElementById('videoElement');
+        const canvas = document.getElementById('canvasElement');
+        let stream = null;
 
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').classList.toggle('active', show);
+        }
+
+        // NAVEGACIÓN
         function goToScreen(num) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen' + num).classList.add('active');
             document.getElementById('btnHome').style.display = num > 1 ? 'block' : 'none';
             
-            // Reset state if going back to start
             if(num === 1) resetApp();
+            
+            // Si entramos a la pantalla de cámara, la inicializamos
+            if(num === 3) startCamera();
         }
 
         function selectGrade(grade, el) {
@@ -197,26 +267,6 @@
             el.classList.add('selected');
             currentGrade = grade;
             document.getElementById('btnGrade').disabled = false;
-        }
-
-        function takePhoto() {
-            photos.push(`Pág ${photos.length + 1}`);
-            renderQueue();
-        }
-
-        function deletePhoto(index) {
-            photos.splice(index, 1);
-            renderQueue();
-        }
-
-        function renderQueue() {
-            const box = document.getElementById('queueBox');
-            box.innerHTML = '';
-            photos.forEach((p, i) => {
-                box.innerHTML += `<div class="thumb">${p} <button class="thumb-del" onclick="deletePhoto(${i})">X</button></div>`;
-            });
-            document.getElementById('fotoCount').innerText = `${photos.length} fotos`;
-            document.getElementById('btnPhotos').disabled = photos.length === 0;
         }
 
         function toggleType(type, el) {
@@ -231,33 +281,180 @@
             document.getElementById('btnGenerate').disabled = selectedTypes.length === 0;
         }
 
-        function generateQuestions() {
-            goToScreen(5);
-            mockRegenerate(); // Simular carga inicial
+        // --- LÓGICA DE CÁMARA ---
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("Error accediendo a la cámara: ", err);
+                alert("No se pudo acceder a la cámara. Revisa los permisos.");
+            }
         }
 
-        function mockRegenerate() {
-            const box = document.getElementById('resultsBox');
-            box.innerHTML = '<p>Procesando con IA (Gemini)...</p>';
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        // CAPTURA Y CONEXIÓN CON API 1: /api/process-image
+        async function takePhotoAndProcess() {
+            if (!stream) return;
             
-            setTimeout(() => {
-                box.innerHTML = '';
-                for(let i = 1; i <= 20; i++) {
-                    const randomType = selectedTypes[Math.floor(Math.random() * selectedTypes.length)];
-                    box.innerHTML += `
-                        <div class="question-item">
-                            <strong>Pregunta ${i}:</strong> Generada adaptada a ${currentGrade}° Primaria.
-                            <br><small style="color:#64748b">Tipo: ${randomType}</small>
-                        </div>
-                    `;
+            // Dibujar el frame actual del video en el canvas
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Extraer Base64 crudo
+            const rawBase64 = canvas.toDataURL('image/jpeg');
+            
+            showLoading(true);
+            try {
+                // LLAMADA A LA API
+                const response = await fetch('/api/process-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: rawBase64 })
+                });
+                
+                const data = await response.json();
+                
+                if(data.success && data.image) {
+                    // Agregar la imagen optimizada (CamScanner) a nuestra cola
+                    photos.push(data.image);
+                    renderQueue();
+                } else {
+                    alert('Error procesando imagen: ' + (data.message || 'Desconocido'));
                 }
-            }, 1000);
+            } catch (err) {
+                console.error(err);
+                alert('Error de red al procesar la imagen.');
+            } finally {
+                showLoading(false);
+            }
         }
 
+        function deletePhoto(index) {
+            photos.splice(index, 1);
+            renderQueue();
+        }
+
+        function renderQueue() {
+            const box = document.getElementById('queueBox');
+            box.innerHTML = '';
+            photos.forEach((base64String, i) => {
+                // Usamos el base64 como background del thumbnail
+                box.innerHTML += `
+                    <div class="thumb" style="background-image: url('${base64String}')">
+                        <button class="thumb-del" onclick="deletePhoto(${i})">X</button>
+                    </div>`;
+            });
+            document.getElementById('fotoCount').innerText = `${photos.length} fotos`;
+            document.getElementById('btnPhotos').disabled = photos.length === 0;
+        }
+
+        // --- CONEXIÓN CON API 2: /api/generate-questions ---
+        async function handleGenerateQuestions() {
+            goToScreen(5);
+            const box = document.getElementById('resultsBox');
+            box.innerHTML = '<p style="text-align:center;">Analizando cuadernos con TUKU.ia...</p>';
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/api/generate-questions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        images: photos,
+                        grade: currentGrade,
+                        questionTypes: selectedTypes
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.questions) {
+                    generatedQuestionsData = data.questions; // Guardamos para exportar a PDF después
+                    renderQuestions(data.questions);
+                } else {
+                    box.innerHTML = `<p style="color:red;">Error de IA: ${data.message}</p>`;
+                }
+            } catch(err) {
+                console.error(err);
+                box.innerHTML = '<p style="color:red;">Error conectando con el motor de IA.</p>';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderQuestions(questions) {
+            const box = document.getElementById('resultsBox');
+            box.innerHTML = '';
+            questions.forEach(q => {
+                let optionsHtml = '';
+                if (q.options && q.options.length > 0) {
+                    optionsHtml = `<ul style="margin-left:20px; font-size:14px; color:var(--text-muted);">
+                        ${q.options.map(opt => `<li>${opt}</li>`).join('')}
+                    </ul>`;
+                }
+                
+                box.innerHTML += `
+                    <div class="question-item">
+                        <strong>Pregunta ${q.id}:</strong> ${q.statement}
+                        <br><small style="color:var(--primary); font-weight:bold;">[${q.type}]</small>
+                        ${optionsHtml}
+                        <br><small style="color:#64748b">Respuesta esperada: ${q.answer}</small>
+                    </div>
+                `;
+            });
+        }
+
+        // --- CONEXIÓN CON API 3: /api/export-pdf ---
+        async function handleExportPDF() {
+            if(!generatedQuestionsData) return;
+            
+            showLoading(true);
+            try {
+                const response = await fetch('/api/export-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        questions: generatedQuestionsData, 
+                        grade: currentGrade 
+                    })
+                });
+
+                if (!response.ok) throw new Error('Error al generar PDF');
+
+                // Convertir la respuesta a archivo descargable
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Cuestionario_TUKU.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Hubo un problema al exportar el documento.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // RESET
         function resetApp() {
+            stopCamera();
             currentGrade = null;
             photos = [];
             selectedTypes = [];
+            generatedQuestionsData = null;
             document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
             renderQueue();
             document.getElementById('btnGrade').disabled = true;
