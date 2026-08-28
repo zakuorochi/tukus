@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUKU.OS - Motor Educativo IA</title>
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            padding: 40px;
+            position: relative;
+            min-height: 550px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Control global */
+        .btn-home {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #f1f5f9;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: none;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: 0.2s;
+        }
+        .btn-home:hover { background: #e2e8f0; color: var(--text-main); }
+
+        /* Pantallas */
+        .screen { display: none; flex: 1; flex-direction: column; justify-content: center; animation: fadeIn 0.3s ease; }
+        .screen.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1, h2 { color: #0f172a; margin-bottom: 15px; }
+        p.subtitle { color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; }
+
+        /* Botones */
+        .btn { padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: #f1f5f9; }
+        .footer-nav { display: flex; justify-content: space-between; margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px; }
+
+        /* Grados y Opciones */
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        
+        .card-select {
+            padding: 20px; border: 2px solid var(--border); border-radius: 12px;
+            text-align: center; cursor: pointer; transition: 0.2s; font-weight: bold;
+        }
+        .card-select.selected { border-color: var(--primary); background: #ecfdf5; color: var(--primary-hover); }
+
+        /* Cámara */
+        .camera-view {
+            height: 250px; background: #1e293b; border-radius: 12px; margin-bottom: 15px;
+            display: flex; align-items: center; justify-content: center; position: relative;
+        }
+        .scanner-frame { width: 80%; height: 80%; border: 2px dashed rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; color: white; }
+        .queue-container { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; }
+        .thumb { width: 60px; height: 60px; background: #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; font-size: 12px; }
+        .thumb-del { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; border: none; cursor: pointer; font-size: 10px; }
+
+        /* Resultados */
+        .results-box { max-height: 300px; overflow-y: auto; background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
+        .question-item { padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <button class="btn-home" id="btnHome" onclick="goToScreen(1)">🏠 Volver al inicio</button>
+
+        <!-- 1. Inicio -->
+        <div class="screen active" id="screen1" style="text-align: center; align-items: center;">
+            <h1>TUKU.OS</h1>
+            <p class="subtitle">Módulo de evaluación inteligente. Convierte los apuntes de los cuadernos en dinámicas de aprendizaje interactivo.</p>
+            <button class="btn btn-primary" onclick="goToScreen(2)">Acceder</button>
+        </div>
+
+        <!-- 2. Selección de Grado -->
+        <div class="screen" id="screen2">
+            <h2>Nivel del Alumno</h2>
+            <p class="subtitle">Selecciona el grado para ajustar la complejidad de la IA.</p>
+            <div class="grid-3">
+                <div class="card-select grade-opt" onclick="selectGrade(1, this)">1° Primaria</div>
+                <div class="card-select grade-opt" onclick="selectGrade(2, this)">2° Primaria</div>
+                <div class="card-select grade-opt" onclick="selectGrade(3, this)">3° Primaria</div>
+                <div class="card-select grade-opt" onclick="selectGrade(4, this)">4° Primaria</div>
+                <div class="card-select grade-opt" onclick="selectGrade(5, this)">5° Primaria</div>
+                <div class="card-select grade-opt" onclick="selectGrade(6, this)">6° Primaria</div>
+            </div>
+            <div class="footer-nav">
+                <button class="btn btn-outline" onclick="goToScreen(1)">Atrás</button>
+                <button class="btn btn-primary" id="btnGrade" disabled onclick="goToScreen(3)">Siguiente</button>
+            </div>
+        </div>
+
+        <!-- 3. Cámara y Escáner -->
+        <div class="screen" id="screen3">
+            <h2>Escanear Cuaderno</h2>
+            <p class="subtitle">Encuadra la página. El sistema mejorará la nitidez automáticamente.</p>
+            <div class="camera-view">
+                <div class="scanner-frame">Vista de Cámara</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn btn-primary" onclick="takePhoto()">📸 Capturar</button>
+                <span id="fotoCount" style="color: var(--text-muted); font-size: 14px;">0 fotos</span>
+            </div>
+            <div class="queue-container" id="queueBox"></div>
+            
+            <div class="footer-nav">
+                <button class="btn btn-outline" onclick="goToScreen(2)">Atrás</button>
+                <button class="btn btn-primary" id="btnPhotos" disabled onclick="goToScreen(4)">Continuar</button>
+            </div>
+        </div>
+
+        <!-- 4. Tipo de Preguntas -->
+        <div class="screen" id="screen4">
+            <h2>Estructura del Cuestionario</h2>
+            <p class="subtitle">Selecciona hasta 4 tipos de preguntas.</p>
+            <div class="grid-2">
+                <div class="card-select type-opt" onclick="toggleType('Opción Múltiple', this)">Opción Múltiple</div>
+                <div class="card-select type-opt" onclick="toggleType('Completar Espacios', this)">Completar Espacios</div>
+                <div class="card-select type-opt" onclick="toggleType('Preguntas y Respuestas', this)">Preguntas y Respuestas</div>
+                <div class="card-select type-opt" onclick="toggleType('Verdadero / Falso', this)">Verdadero / Falso</div>
+            </div>
+            <div class="footer-nav">
+                <button class="btn btn-outline" onclick="goToScreen(3)">Atrás</button>
+                <button class="btn btn-primary" id="btnGenerate" disabled onclick="generateQuestions()">Generar Preguntas</button>
+            </div>
+        </div>
+
+        <!-- 5. Resultados -->
+        <div class="screen" id="screen5">
+            <h2>Cuestionario Generado</h2>
+            <p class="subtitle">20 preguntas listas basadas en los cuadernos escaneados.</p>
+            <div class="results-box" id="resultsBox">
+                <!-- Las preguntas se inyectarán aquí -->
+            </div>
+            <div class="footer-nav" style="justify-content: flex-start; gap: 15px;">
+                <button class="btn btn-primary" onclick="alert('Exportando a PDF...')">📄 Exportar PDF</button>
+                <button class="btn btn-outline" onclick="mockRegenerate()">🔄 Volver a generar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentGrade = null;
+        let photos = [];
+        let selectedTypes = [];
+
+        function goToScreen(num) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen' + num).classList.add('active');
+            document.getElementById('btnHome').style.display = num > 1 ? 'block' : 'none';
+            
+            // Reset state if going back to start
+            if(num === 1) resetApp();
+        }
+
+        function selectGrade(grade, el) {
+            document.querySelectorAll('.grade-opt').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+            currentGrade = grade;
+            document.getElementById('btnGrade').disabled = false;
+        }
+
+        function takePhoto() {
+            photos.push(`Pág ${photos.length + 1}`);
+            renderQueue();
+        }
+
+        function deletePhoto(index) {
+            photos.splice(index, 1);
+            renderQueue();
+        }
+
+        function renderQueue() {
+            const box = document.getElementById('queueBox');
+            box.innerHTML = '';
+            photos.forEach((p, i) => {
+                box.innerHTML += `<div class="thumb">${p} <button class="thumb-del" onclick="deletePhoto(${i})">X</button></div>`;
+            });
+            document.getElementById('fotoCount').innerText = `${photos.length} fotos`;
+            document.getElementById('btnPhotos').disabled = photos.length === 0;
+        }
+
+        function toggleType(type, el) {
+            const idx = selectedTypes.indexOf(type);
+            if(idx > -1) {
+                selectedTypes.splice(idx, 1);
+                el.classList.remove('selected');
+            } else {
+                selectedTypes.push(type);
+                el.classList.add('selected');
+            }
+            document.getElementById('btnGenerate').disabled = selectedTypes.length === 0;
+        }
+
+        function generateQuestions() {
+            goToScreen(5);
+            mockRegenerate(); // Simular carga inicial
+        }
+
+        function mockRegenerate() {
+            const box = document.getElementById('resultsBox');
+            box.innerHTML = '<p>Procesando con IA (Gemini)...</p>';
+            
+            setTimeout(() => {
+                box.innerHTML = '';
+                for(let i = 1; i <= 20; i++) {
+                    const randomType = selectedTypes[Math.floor(Math.random() * selectedTypes.length)];
+                    box.innerHTML += `
+                        <div class="question-item">
+                            <strong>Pregunta ${i}:</strong> Generada adaptada a ${currentGrade}° Primaria.
+                            <br><small style="color:#64748b">Tipo: ${randomType}</small>
+                        </div>
+                    `;
+                }
+            }, 1000);
+        }
+
+        function resetApp() {
+            currentGrade = null;
+            photos = [];
+            selectedTypes = [];
+            document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
+            renderQueue();
+            document.getElementById('btnGrade').disabled = true;
+            document.getElementById('btnPhotos').disabled = true;
+            document.getElementById('btnGenerate').disabled = true;
+        }
+    </script>
+</body>
+</html>
