@@ -66,7 +66,7 @@
         p.subtitle { color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; }
 
         /* Botones */
-        .btn { padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
+        .btn { padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;}
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -84,44 +84,35 @@
         }
         .card-select.selected { border-color: var(--primary); background: #ecfdf5; color: var(--primary-hover); }
 
-        /* Cámara */
+        /* Cámara y Archivos */
         .camera-view {
             height: 250px; background: #1e293b; border-radius: 12px; margin-bottom: 15px;
             display: flex; align-items: center; justify-content: center; position: relative;
-            overflow: hidden; /* Added to keep video inside container */
+            overflow: hidden; 
         }
         
         #videoElement {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
+            width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1;
         }
 
         .scanner-frame { 
-            width: 80%; height: 80%; 
-            border: 2px dashed rgba(255,255,255,0.7); 
-            display: flex; align-items: center; justify-content: center; 
-            color: white; 
-            z-index: 2; /* Needs to be above video */
-            position: relative;
+            width: 80%; height: 80%; border: 2px dashed rgba(255,255,255,0.7); 
+            display: flex; align-items: center; justify-content: center; color: white; 
+            z-index: 2; position: relative;
         }
         
-        #canvasElement {
-             display: none; /* Hidden canvas for taking photos */
+        #canvasElement { display: none; }
+
+        .upload-section {
+            margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);
+            display: flex; flex-direction: column; align-items: center;
         }
 
         .queue-container { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; }
         .thumb { 
-            width: 60px; height: 60px; 
-            background: #e2e8f0; border-radius: 8px; 
+            width: 60px; height: 60px; background: #e2e8f0; border-radius: 8px; 
             display: flex; align-items: center; justify-content: center; 
-            position: relative; font-size: 12px; 
-            background-size: cover; /* Added for displaying thumbnail image */
-            background-position: center;
+            position: relative; font-size: 12px; background-size: cover; background-position: center;
         }
         .thumb-del { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; border: none; cursor: pointer; font-size: 10px; }
 
@@ -131,15 +122,9 @@
         
         /* Loading Overlay */
         .loading-overlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.8);
-            z-index: 100;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            border-radius: 16px;
+            display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9); z-index: 100;
+            align-items: center; justify-content: center; flex-direction: column; border-radius: 16px;
         }
         .loading-overlay.active { display: flex; }
     </style>
@@ -183,19 +168,28 @@
         <!-- 3. Cámara y Escáner -->
         <div class="screen" id="screen3">
             <h2>Escanear Cuaderno</h2>
-            <p class="subtitle">Encuadra la página. El sistema mejorará la nitidez automáticamente.</p>
+            <p class="subtitle">Encuadra la página o sube las fotos directamente desde tu dispositivo.</p>
+            
             <div class="camera-view">
-                <!-- Video stream from camera -->
                 <video id="videoElement" autoplay playsinline></video>
                 <div class="scanner-frame">Vista de Cámara</div>
             </div>
-            <!-- Hidden canvas to capture the frame -->
+            
             <canvas id="canvasElement"></canvas>
 
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <button class="btn btn-primary" onclick="takePhotoAndProcess()">📸 Capturar</button>
-                <span id="fotoCount" style="color: var(--text-muted); font-size: 14px;">0 fotos</span>
+                <button class="btn btn-primary" onclick="takePhotoAndProcess()">📸 Capturar cámara</button>
+                <span id="fotoCount" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">0 fotos</span>
             </div>
+
+            <!-- NUEVO: Sección para subir archivos -->
+            <div class="upload-section">
+                <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+                <button class="btn btn-outline" onclick="document.getElementById('fileInput').click()">
+                    📁 Subir archivos locales (JPG/PNG)
+                </button>
+            </div>
+
             <div class="queue-container" id="queueBox"></div>
             
             <div class="footer-nav">
@@ -237,11 +231,11 @@
     <script>
         // ESTADO DE LA APLICACIÓN
         let currentGrade = null;
-        let photos = []; // Almacenará los strings Base64 de las imágenes procesadas
+        let photos = []; 
         let selectedTypes = [];
-        let generatedQuestionsData = null; // Almacenará el JSON devuelto por Gemini
+        let generatedQuestionsData = null; 
         
-        // REFERENCIAS A LA CÁMARA
+        // REFERENCIAS
         const video = document.getElementById('videoElement');
         const canvas = document.getElementById('canvasElement');
         let stream = null;
@@ -257,8 +251,6 @@
             document.getElementById('btnHome').style.display = num > 1 ? 'block' : 'none';
             
             if(num === 1) resetApp();
-            
-            // Si entramos a la pantalla de cámara, la inicializamos
             if(num === 3) startCamera();
         }
 
@@ -287,25 +279,19 @@
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 video.srcObject = stream;
             } catch (err) {
-                console.error("Error accediendo a la cámara: ", err);
-                alert("No se pudo acceder a la cámara. Revisa los permisos.");
+                console.warn("Cámara no disponible, pero puedes usar la subida de archivos.", err);
             }
         }
 
         function stopCamera() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
+            if (stream) stream.getTracks().forEach(track => track.stop());
         }
 
-        // CAPTURA Y CONEXIÓN CON API 1: /api/process-image
-   // CAPTURA Y PROCESAMIENTO NATIVO EN EL NAVEGADOR (Sin llamar a Vercel)
         function takePhotoAndProcess() {
-            if (!stream) return;
+            if (!stream) return alert("Cámara no iniciada.");
             
-            showLoading(true); // Mostrar loading por un segundo para feedback visual
+            showLoading(true);
 
-            // 1. LIMITAR EL TAMAÑO (Para cuando se envíe a Gemini después)
             const MAX_WIDTH = 1280; 
             let scale = 1;
             if (video.videoWidth > MAX_WIDTH) {
@@ -315,25 +301,64 @@
             canvas.height = video.videoHeight * scale;
             const ctx = canvas.getContext('2d');
             
-            // 2. Aplicar filtros tipo "CamScanner" nativos del navegador
-            // Aumentamos contraste al 150% y lo pasamos a escala de grises al 100%
             ctx.filter = 'contrast(150%) grayscale(100%) brightness(110%)';
-            
-            // Dibujar el video en el canvas con los filtros aplicados
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            // 3. Extraer Base64 comprimido (Quality: 0.6)
             const processedBase64 = canvas.toDataURL('image/jpeg', 0.6);
             
-            // 4. Agregar a la cola instantáneamente
             photos.push(processedBase64);
             renderQueue();
             
-            // 5. Ocultar loading
-            setTimeout(() => {
-                showLoading(false);
-            }, 500); // Pequeña pausa para que el usuario sienta que se "escaneó"
+            setTimeout(() => { showLoading(false); }, 400); 
         }
+
+        // --- LÓGICA DE SUBIDA DE ARCHIVOS (NUEVO) ---
+        async function handleFileUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            showLoading(true);
+
+            for (let i = 0; i < files.length; i++) {
+                await processFileImage(files[i]);
+            }
+
+            // Limpiar input para permitir seleccionar las mismas imágenes después si se eliminan
+            event.target.value = '';
+            
+            renderQueue();
+            showLoading(false);
+        }
+
+        function processFileImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const MAX_WIDTH = 1280;
+                        let scale = 1;
+                        if (img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
+                        
+                        canvas.width = img.width * scale;
+                        canvas.height = img.height * scale;
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Aplicamos el mismo filtro CamScanner a las imágenes subidas
+                        ctx.filter = 'contrast(150%) grayscale(100%) brightness(110%)';
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        const processedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                        photos.push(processedBase64);
+                        resolve();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // --- MANEJO DE COLA ---
         function deletePhoto(index) {
             photos.splice(index, 1);
             renderQueue();
@@ -343,7 +368,6 @@
             const box = document.getElementById('queueBox');
             box.innerHTML = '';
             photos.forEach((base64String, i) => {
-                // Usamos el base64 como background del thumbnail
                 box.innerHTML += `
                     <div class="thumb" style="background-image: url('${base64String}')">
                         <button class="thumb-del" onclick="deletePhoto(${i})">X</button>
@@ -373,15 +397,16 @@
                 
                 const data = await response.json();
                 
-                if (data.success && data.questions) {
-                    generatedQuestionsData = data.questions; // Guardamos para exportar a PDF después
+                if (response.ok && data.success && data.questions) {
+                    generatedQuestionsData = data.questions; 
                     renderQuestions(data.questions);
                 } else {
-                    box.innerHTML = `<p style="color:red;">Error de IA: ${data.message}</p>`;
+                    // Muestra el mensaje exacto que viene del catch del servidor
+                    box.innerHTML = `<p style="color:red; font-weight:bold;">Error de IA:</p><p style="color:red;">${data.message}</p><p style="font-size:12px; color:grey;">${data.error || ''}</p>`;
                 }
             } catch(err) {
                 console.error(err);
-                box.innerHTML = '<p style="color:red;">Error conectando con el motor de IA.</p>';
+                box.innerHTML = '<p style="color:red;">Error de red conectando con el motor de IA.</p>';
             } finally {
                 showLoading(false);
             }
@@ -426,7 +451,6 @@
 
                 if (!response.ok) throw new Error('Error al generar PDF');
 
-                // Convertir la respuesta a archivo descargable
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
