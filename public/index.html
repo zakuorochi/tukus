@@ -302,14 +302,19 @@
         async function takePhotoAndProcess() {
             if (!stream) return;
             
-            // Dibujar el frame actual del video en el canvas
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            // 1. LIMITAR EL TAMAÑO PARA EVITAR ERROR DE VERCEL (4.5MB Payload Limit)
+            const MAX_WIDTH = 1280; // Resolución manejable
+            let scale = 1;
+            if (video.videoWidth > MAX_WIDTH) {
+                scale = MAX_WIDTH / video.videoWidth;
+            }
+            canvas.width = video.videoWidth * scale;
+            canvas.height = video.videoHeight * scale;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            // Extraer Base64 crudo
-            const rawBase64 = canvas.toDataURL('image/jpeg');
+            // 2. COMPRIMIR FUERTEMENTE (Quality: 0.5)
+            const rawBase64 = canvas.toDataURL('image/jpeg', 0.5);
             
             showLoading(true);
             try {
@@ -331,7 +336,7 @@
                 }
             } catch (err) {
                 console.error(err);
-                alert('Error de red al procesar la imagen.');
+                alert('Error de red al procesar la imagen. Revisa que el archivo de la API se llame process-image.js');
             } finally {
                 showLoading(false);
             }
