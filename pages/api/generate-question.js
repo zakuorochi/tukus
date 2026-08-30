@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         // Asegúrate de tener tu API KEY en un archivo .env local como: GEMINI_API_KEY=tu_clave
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         // gemini-1.5-flash es excelente y muy rápido para leer múltiples imágenes
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
 
         // 3. Preparar las imágenes para la API de Gemini
         // Gemini espera un formato específico (inlineData)
