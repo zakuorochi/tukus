@@ -1,4 +1,3 @@
-
 import sharp from 'sharp';
 
 export default async function handler(req, res) {
@@ -53,3 +52,12 @@ export default async function handler(req, res) {
         });
     }
 }
+
+// CORRECCIÓN CRÍTICA: Aumentar el límite de tamaño del body de Next.js
+export const config = {
+    api: {
+        bodyParser: {
+            sizeLimit: '4mb', // Permite cargas de hasta 4 Megabytes (el límite de Vercel Serverless es 4.5MB)
+        },
+    },
+};
