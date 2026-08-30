@@ -299,11 +299,14 @@
         }
 
         // CAPTURA Y CONEXIÓN CON API 1: /api/process-image
-        async function takePhotoAndProcess() {
+   // CAPTURA Y PROCESAMIENTO NATIVO EN EL NAVEGADOR (Sin llamar a Vercel)
+        function takePhotoAndProcess() {
             if (!stream) return;
             
-            // 1. LIMITAR EL TAMAÑO PARA EVITAR ERROR DE VERCEL (4.5MB Payload Limit)
-            const MAX_WIDTH = 1280; // Resolución manejable
+            showLoading(true); // Mostrar loading por un segundo para feedback visual
+
+            // 1. LIMITAR EL TAMAÑO (Para cuando se envíe a Gemini después)
+            const MAX_WIDTH = 1280; 
             let scale = 1;
             if (video.videoWidth > MAX_WIDTH) {
                 scale = MAX_WIDTH / video.videoWidth;
@@ -311,37 +314,26 @@
             canvas.width = video.videoWidth * scale;
             canvas.height = video.videoHeight * scale;
             const ctx = canvas.getContext('2d');
+            
+            // 2. Aplicar filtros tipo "CamScanner" nativos del navegador
+            // Aumentamos contraste al 150% y lo pasamos a escala de grises al 100%
+            ctx.filter = 'contrast(150%) grayscale(100%) brightness(110%)';
+            
+            // Dibujar el video en el canvas con los filtros aplicados
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            // 2. COMPRIMIR FUERTEMENTE (Quality: 0.5)
-            const rawBase64 = canvas.toDataURL('image/jpeg', 0.5);
+            // 3. Extraer Base64 comprimido (Quality: 0.6)
+            const processedBase64 = canvas.toDataURL('image/jpeg', 0.6);
             
-            showLoading(true);
-            try {
-                // LLAMADA A LA API
-                const response = await fetch('/api/process-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: rawBase64 })
-                });
-                
-                const data = await response.json();
-                
-                if(data.success && data.image) {
-                    // Agregar la imagen optimizada (CamScanner) a nuestra cola
-                    photos.push(data.image);
-                    renderQueue();
-                } else {
-                    alert('Error procesando imagen: ' + (data.message || 'Desconocido'));
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Error de red al procesar la imagen. Revisa que el archivo de la API se llame process-image.js');
-            } finally {
+            // 4. Agregar a la cola instantáneamente
+            photos.push(processedBase64);
+            renderQueue();
+            
+            // 5. Ocultar loading
+            setTimeout(() => {
                 showLoading(false);
-            }
+            }, 500); // Pequeña pausa para que el usuario sienta que se "escaneó"
         }
-
         function deletePhoto(index) {
             photos.splice(index, 1);
             renderQueue();
