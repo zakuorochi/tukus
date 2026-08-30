@@ -1,4 +1,3 @@
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default async function handler(req, res) {
@@ -21,20 +20,21 @@ export default async function handler(req, res) {
         }
 
         // 2. Inicializar la API de Gemini
-        // Asegúrate de tener tu API KEY en un archivo .env local como: GEMINI_API_KEY=tu_clave
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        // gemini-1.5-flash es excelente y muy rápido para leer múltiples imágenes
-        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+        
+        // Usamos el modelo solicitado, forzando la salida a JSON
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-3.1-flash-lite",
+            generationConfig: { responseMimeType: "application/json" }
+        });
 
         // 3. Preparar las imágenes para la API de Gemini
-        // Gemini espera un formato específico (inlineData)
         const imageParts = images.map(imgBase64 => {
-            // Quitamos el prefijo si existe
             const base64Data = imgBase64.replace(/^data:image\/\w+;base64,/, '');
             return {
                 inlineData: {
                     data: base64Data,
-                    mimeType: "image/jpeg" // Asumimos JPEG por el procesamiento anterior
+                    mimeType: "image/jpeg"
                 }
             };
         });
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
         - Los tipos de pregunta que debes generar son estrictamente de estas categorías: ${questionTypes.join(', ')}.
 
         Estructura de la salida:
-        Debes devolver ÚNICAMENTE un objeto JSON válido (sin formato Markdown, sin texto adicional), con la siguiente estructura exacta:
+        Debes devolver ÚNICAMENTE un objeto JSON válido, con la siguiente estructura exacta:
         {
           "questions": [
             {
@@ -64,18 +64,15 @@ export default async function handler(req, res) {
         }
         `;
 
-        // 5. Llamada multimodal a Gemini (Texto + Imágenes)
+        // 5. Llamada multimodal a Gemini
         const requestContent = [promptText, ...imageParts];
         
         console.log("Enviando petición a Gemini...");
         const result = await model.generateContent(requestContent);
         const responseText = result.response.text();
 
-        // 6. Limpieza y parseo del resultado JSON
-        // A veces Gemini envuelve el JSON en bloques de código markdown (```json ... ```)
-        let cleanedJson = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
-        
-        const parsedData = JSON.parse(cleanedJson);
+        // 6. Parseo del resultado JSON (Ya no necesita Regex porque forzamos JSON en la configuración)
+        const parsedData = JSON.parse(responseText);
 
         // 7. Retornar al frontend
         return res.status(200).json({
@@ -92,3 +89,12 @@ export default async function handler(req, res) {
         });
     }
 }
+
+// CORRECCIÓN CRÍTICA: Aumentar el límite de tamaño del body para que Next.js no corte la petición
+export const config = {
+    api: {
+        bodyParser: {
+            sizeLimit: '4mb', 
+        },
+    },
+};
