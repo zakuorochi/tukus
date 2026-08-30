@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TUKU.OS - Motor Educativo IA</title>
+    <!-- Incluyendo jsPDF localmente desde CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
             --primary: #10b981;
@@ -86,7 +88,9 @@
 
         /* Cámara y Archivos */
         .camera-view {
-            height: 250px; background: #1e293b; border-radius: 12px; margin-bottom: 15px;
+            /* INCREASED HEIGHT TO DOUBLE */
+            height: 500px; 
+            background: #1e293b; border-radius: 12px; margin-bottom: 15px;
             display: flex; align-items: center; justify-content: center; position: relative;
             overflow: hidden; 
         }
@@ -182,7 +186,6 @@
                 <span id="fotoCount" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">0 fotos</span>
             </div>
 
-            <!-- NUEVO: Sección para subir archivos -->
             <div class="upload-section">
                 <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
                 <button class="btn btn-outline" onclick="document.getElementById('fileInput').click()">
@@ -222,7 +225,9 @@
                 <!-- Las preguntas se inyectarán aquí -->
             </div>
             <div class="footer-nav" style="justify-content: flex-start; gap: 15px;">
-                <button class="btn btn-primary" onclick="handleExportPDF()">📄 Exportar PDF</button>
+                <!-- Updated buttons for two PDFs -->
+                <button class="btn btn-primary" onclick="exportQuestionsPDF()">📄 PDF Preguntas</button>
+                <button class="btn btn-outline" onclick="exportAnswersPDF()">📄 PDF Respuestas</button>
                 <button class="btn btn-outline" onclick="handleGenerateQuestions()">🔄 Volver a generar</button>
             </div>
         </div>
@@ -276,7 +281,14 @@
         // --- LÓGICA DE CÁMARA ---
         async function startCamera() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                // Request higher resolution explicitly
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 } 
+                    } 
+                });
                 video.srcObject = stream;
             } catch (err) {
                 console.warn("Cámara no disponible, pero puedes usar la subida de archivos.", err);
@@ -312,7 +324,7 @@
             setTimeout(() => { showLoading(false); }, 400); 
         }
 
-        // --- LÓGICA DE SUBIDA DE ARCHIVOS (NUEVO) ---
+        // --- LÓGICA DE SUBIDA DE ARCHIVOS ---
         async function handleFileUpload(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
@@ -323,9 +335,7 @@
                 await processFileImage(files[i]);
             }
 
-            // Limpiar input para permitir seleccionar las mismas imágenes después si se eliminan
             event.target.value = '';
-            
             renderQueue();
             showLoading(false);
         }
@@ -344,7 +354,6 @@
                         canvas.height = img.height * scale;
                         const ctx = canvas.getContext('2d');
                         
-                        // Aplicamos el mismo filtro CamScanner a las imágenes subidas
                         ctx.filter = 'contrast(150%) grayscale(100%) brightness(110%)';
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         
@@ -401,7 +410,6 @@
                     generatedQuestionsData = data.questions; 
                     renderQuestions(data.questions);
                 } else {
-                    // Muestra el mensaje exacto que viene del catch del servidor
                     box.innerHTML = `<p style="color:red; font-weight:bold;">Error de IA:</p><p style="color:red;">${data.message}</p><p style="font-size:12px; color:grey;">${data.error || ''}</p>`;
                 }
             } catch(err) {
@@ -412,6 +420,7 @@
             }
         }
 
+        // Modified render function to hide the answer from the main screen for the students
         function renderQuestions(questions) {
             const box = document.getElementById('resultsBox');
             box.innerHTML = '';
@@ -428,59 +437,102 @@
                         <strong>Pregunta ${q.id}:</strong> ${q.statement}
                         <br><small style="color:var(--primary); font-weight:bold;">[${q.type}]</small>
                         ${optionsHtml}
-                        <br><small style="color:#64748b">Respuesta esperada: ${q.answer}</small>
                     </div>
                 `;
             });
         }
 
-        // --- CONEXIÓN CON API 3: /api/export-pdf ---
-        async function handleExportPDF() {
+        // --- EXPORT PDF LOGIC (CLIENT SIDE) ---
+        // Using jsPDF to handle it directly in the browser to avoid server load
+        
+        function exportQuestionsPDF() {
             if(!generatedQuestionsData) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
             
-            showLoading(true);
-            try {
-                const response = await fetch('/api/export-pdf', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        questions: generatedQuestionsData, 
-                        grade: currentGrade 
-                    })
-                });
-
-                if (!response.ok) throw new Error('Error al generar PDF');
-
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'Cuestionario_TUKU.pdf';
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
+            doc.setFontSize(18);
+            doc.setTextColor(16, 185, 129); // Primary green
+            doc.text("TUKU.OS - Cuestionario de Evaluacion", 20, 20);
+            
+            doc.setFontSize(12);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Nivel: ${currentGrade}° Primaria`, 20, 30);
+            
+            doc.setTextColor(30, 41, 59);
+            let y = 45;
+            
+            generatedQuestionsData.forEach((q, index) => {
+                if(y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
                 
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Hubo un problema al exportar el documento.');
-            } finally {
-                showLoading(false);
-            }
+                // Question text with word wrap
+                const splitTitle = doc.splitTextToSize(`${index + 1}. ${q.statement}`, 170);
+                doc.text(splitTitle, 20, y);
+                y += (splitTitle.length * 7) + 5;
+                
+                if (q.type === 'Opción Múltiple' && q.options) {
+                    const letters = ['a)', 'b)', 'c)', 'd)'];
+                    q.options.forEach((opt, i) => {
+                        doc.text(`${letters[i]} ${opt}`, 30, y);
+                        y += 7;
+                    });
+                    y += 5;
+                } else if (q.type === 'Verdadero / Falso') {
+                    doc.text("(  ) Verdadero     (  ) Falso", 30, y);
+                    y += 12;
+                } else {
+                    // Lines for written answers
+                    doc.line(20, y, 190, y);
+                    y += 10;
+                    doc.line(20, y, 190, y);
+                    y += 15;
+                }
+            });
+            
+            doc.save("TUKU_Cuestionario_Preguntas.pdf");
         }
 
-        // RESET
-        function resetApp() {
-            stopCamera();
-            currentGrade = null;
-            photos = [];
-            selectedTypes = [];
-            generatedQuestionsData = null;
-            document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
-            renderQueue();
-            document.getElementById('btnGrade').disabled = true;
-            document.getElementById('btnPhotos').disabled = true;
-            document.getElementById('btnGenerate').disabled = true;
+        function exportAnswersPDF() {
+            if(!generatedQuestionsData) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.setTextColor(220, 38, 38); // Red color for answers
+            doc.text("TUKU.OS - HOJA DE RESPUESTAS (Maestro)", 20, 20);
+            
+            doc.setFontSize(12);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Nivel: ${currentGrade}° Primaria`, 20, 30);
+            
+            doc.setTextColor(30, 41, 59);
+            let y = 45;
+            
+            generatedQuestionsData.forEach((q, index) => {
+                if(y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+                
+                // Shortened statement
+                const shortStatement = q.statement.substring(0, 50) + "...";
+                doc.setFont(undefined, 'bold');
+                doc.text(`${index + 1}. ${shortStatement}`, 20, y);
+                y += 7;
+                
+                // Print the actual answer
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(16, 185, 129); // Green text for correct answer
+                const splitAnswer = doc.splitTextToSize(`Respuesta: ${q.answer}`, 160);
+                doc.text(splitAnswer, 30, y);
+                
+                doc.setTextColor(30, 41, 59); // Reset color
+                y += (splitAnswer.length * 7) + 8;
+            });
+            
+            doc.save("TUKU_Cuestionario_Respuestas.pdf");
         }
     </script>
 </body>
