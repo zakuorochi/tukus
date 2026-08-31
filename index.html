@@ -4,20 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TUKU - Aprende Jugando</title>
-    <!-- Incluyendo jsPDF localmente desde CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
-            --primary: #f28a3f; /* Orange from the image border/logo */
+            --primary: #f28a3f;
             --primary-hover: #d97736;
-            --bg-color: #fdf6e3; /* Light cream background */
+            --bg-color: #fdf6e3;
             --card-bg: #fffbf0;
-            --text-main: #34495e; /* Softer dark blue for text */
+            --text-main: #34495e;
             --text-muted: #7f8c8d;
-            --border: #f28a3f; /* Orange borders */
-            --accent-blue: #4fa1c4; /* Blue from logo/text */
-            --accent-green: #68c07e; /* Green from logo */
-            --accent-yellow: #f8c95a; /* Yellow from logo */
+            --border: #f28a3f;
+            --accent-blue: #4fa1c4;
+            --accent-green: #68c07e;
+            --accent-yellow: #f8c95a;
             --radius-large: 24px;
         }
 
@@ -37,9 +36,9 @@
 
         .container {
             width: 100%;
-            max-width: 100%; /* Take full width on mobile */
+            max-width: 100%;
             background: var(--card-bg);
-            border-radius: 0; /* Flat edges on mobile */
+            border-radius: 0;
             border: none;
             box-shadow: none;
             padding: 20px;
@@ -49,12 +48,11 @@
             flex-direction: column;
         }
 
-        /* Responsive max-width for larger screens (Totems/Tablets) */
         @media (min-width: 768px) {
             .container {
                 max-width: 800px;
                 border-radius: var(--radius-large);
-                border: 8px solid var(--primary); /* Thick orange border */
+                border: 8px solid var(--primary);
                 box-shadow: 0 10px 30px rgba(0,0,0,0.15);
                 min-height: 85vh;
                 margin: 20px;
@@ -62,21 +60,24 @@
             }
         }
 
-        /* TUKU Logo and Mascot Styles */
         .logo-container {
             text-align: center;
             margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
         }
 
         .main-logo-img {
             max-width: 380px;
-            width: 180%;
+            width: 100%;
             height: auto;
-            margin-bottom: 10px;
+            margin: 0 auto 15px auto;
+            display: block;
             filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.1));
         }
 
-        /* Control global */
         .btn-home {
             position: absolute;
             top: 20px;
@@ -95,7 +96,6 @@
         }
         .btn-home:active { transform: translateY(4px); box-shadow: none; }
 
-        /* Pantallas */
         .screen { display: none; flex: 1; flex-direction: column; justify-content: flex-start; animation: fadeIn 0.4s ease; }
         .screen.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
@@ -105,7 +105,6 @@
         h2 { font-size: 1.6rem; }
         p.subtitle { color: var(--text-main); text-align: center; margin-bottom: 25px; line-height: 1.5; font-size: 1.1rem; font-weight: 500;}
 
-        /* Botones estilo juego infantil */
         .btn { 
             padding: 16px 28px; 
             border-radius: 16px; 
@@ -151,7 +150,6 @@
             .footer-nav .btn { flex: 1; max-width: 45%; }
         }
 
-        /* Grados y Opciones */
         .grid-3 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         @media (min-width: 600px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
         .grid-2 { display: grid; grid-template-columns: repeat(1, 1fr); gap: 15px; }
@@ -178,13 +176,12 @@
             box-shadow: 0 4px 0px var(--accent-green);
         }
         
-        /* Opcion Especial Graficos */
         .card-select.special {
             border-color: var(--accent-yellow);
             background: #fffde7;
             color: #f57f17;
             box-shadow: 0 4px 0px var(--accent-yellow);
-            grid-column: 1 / -1; /* Ocupa todo el ancho */
+            grid-column: 1 / -1;
             margin-top: 10px;
         }
         .card-select.special.selected {
@@ -194,11 +191,10 @@
             box-shadow: 0 4px 0px #f57f17;
         }
 
-        /* Cámara y Archivos */
         .camera-view {
-            height: 60vh; /* Dynamic height based on screen size */
+            height: 60vh; 
             min-height: 400px;
-            background: #e6f7ff; /* Light blue background as in reference */
+            background: #e6f7ff;
             border-radius: var(--radius-large); 
             margin-bottom: 20px;
             display: flex; align-items: center; justify-content: center; position: relative;
@@ -208,25 +204,6 @@
         
         #videoElement {
             width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1;
-        }
-
-        .scanner-frame { 
-            width: 85%; height: 85%; 
-            border: 4px dashed var(--accent-blue); 
-            border-radius: 50%; /* Circle frame as in reference */
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            color: var(--accent-blue); 
-            font-weight: 900;
-            font-size: 1.2rem;
-            text-align: center;
-            z-index: 2; position: relative;
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(2px);
-        }
-        
-        .camera-icon {
-            font-size: 3rem;
-            margin-top: 10px;
         }
         
         #canvasElement { display: none; }
@@ -254,7 +231,6 @@
             font-weight: bold; display: flex; align-items: center; justify-content: center;
         }
 
-        /* Resultados */
         .results-box { 
             flex: 1; 
             overflow-y: auto; 
@@ -282,8 +258,15 @@
             font-weight: bold;
             margin-left: 10px;
         }
+        .flux-image {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            margin-top: 15px;
+            border: 3px solid #e0e0e0;
+            display: block;
+        }
 
-        /* Loading Overlay */
         .loading-overlay {
             display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(253, 246, 227, 0.95); z-index: 1000;
@@ -305,7 +288,6 @@
 <body>
 
     <div class="container">
-        <!-- Overlay de carga global -->
         <div class="loading-overlay" id="loadingOverlay">
             <div class="spinner"></div>
             <h2 style="color: var(--primary);">¡La magia de TUKU está trabajando!</h2>
@@ -314,9 +296,7 @@
 
         <button class="btn-home" id="btnHome" onclick="goToScreen(1)">🏠 Volver</button>
 
-        <!-- HEADER COMÚN (Logo unificado) -->
         <div class="logo-container" id="mainHeader">
-            <!-- Cargando el nuevo logo unificado directamente desde la raíz -->
             <img src="/logotuku.png" alt="Logo TUKU" class="main-logo-img">
         </div>
 
@@ -325,11 +305,9 @@
             <h1>¡Buenos días niños!<br>¿Qué desean aprender hoy?</h1>
             <p class="subtitle">Toma fotos de tus cuadernos y creemos un juego de preguntas genial.</p>
             
-            <div style="text-align: center; margin-top: 20px;">
-                <!-- QR Code placeholder -->
-                <img src="/instrucciones.png" alt="Instrucciones" class="main-logo-img" style="border-radius: 12px; margin-bottom: 20px;">
-                <br>
-                <button class="btn btn-primary" style="width: 100%; max-width: 300px;" onclick="goToScreen(2)">▶ ¡EMPEZAR AHORA!</button>
+            <div class="logo-container">
+                <img src="/instrucciones.png" alt="Instrucciones" class="main-logo-img" style="border-radius: 12px;">
+                <button class="btn btn-primary" style="width: 100%; max-width: 300px; margin-top: 15px;" onclick="goToScreen(2)">▶ ¡EMPEZAR AHORA!</button>
             </div>
         </div>
 
@@ -391,7 +369,6 @@
                 <div class="card-select type-opt" onclick="toggleType('Preguntas y Respuestas', this)">Preguntas Breves 💬</div>
                 <div class="card-select type-opt" onclick="toggleType('Verdadero / Falso', this)">Verdad o Falso ⚖️</div>
                 
-                <!-- NUEVO BOTÓN PARA DIBUJOS GENERADOS POR IA (FLUX) -->
                 <div class="card-select type-opt special" onclick="toggleType('Ejercicios Gráficos (IA)', this)">
                     🎨 ¡Añadir Dibujos Mágicos (IA)! 🌟<br>
                     <small style="font-size: 0.9rem; font-weight: normal;">El sistema creará imágenes para geometría, ciencias, etc.</small>
@@ -409,7 +386,6 @@
             <h2>¡Tu examen está listo!</h2>
             <p class="subtitle">Hemos creado preguntas súper divertidas.</p>
             <div class="results-box" id="resultsBox">
-                <!-- Las preguntas se inyectarán aquí -->
             </div>
             <div class="footer-nav" style="flex-direction: column; gap: 10px;">
                 <div style="display: flex; gap: 10px; width: 100%;">
@@ -422,13 +398,11 @@
     </div>
 
     <script>
-        // ESTADO DE LA APLICACIÓN
         let currentGrade = null;
         let photos = []; 
         let selectedTypes = [];
         let generatedQuestionsData = null; 
         
-        // REFERENCIAS
         const video = document.getElementById('videoElement');
         const canvas = document.getElementById('canvasElement');
         let stream = null;
@@ -437,17 +411,15 @@
             document.getElementById('loadingOverlay').classList.toggle('active', show);
         }
 
-        // NAVEGACIÓN
         function goToScreen(num) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen' + num).classList.add('active');
             
-            // Ocultar cabecera principal en la cámara para dar más espacio
             const header = document.getElementById('mainHeader');
             if(num === 3) {
                 header.style.display = 'none';
             } else {
-                header.style.display = 'block';
+                header.style.display = 'flex';
             }
 
             document.getElementById('btnHome').style.display = num > 1 ? 'block' : 'none';
@@ -475,26 +447,24 @@
             document.getElementById('btnGenerate').disabled = selectedTypes.length === 0;
         }
 
-        // --- LÓGICA DE CÁMARA ---
       async function startCamera() {
-    try {
-        // Solicitud genérica y rápida sin forzar resoluciones pesadas ni filtros bloqueantes
-        stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' } 
-        });
-        video.srcObject = stream;
-    } catch (err) {
-        console.warn("Cámara no disponible o bloqueada.", err);
-        alert("No se pudo iniciar la cámara automáticamente. Por favor, usa la opción de subir archivos.");
-    }
-}
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
+            });
+            video.srcObject = stream;
+        } catch (err) {
+            console.warn("Cámara no disponible o bloqueada.", err);
+            alert("No se pudo iniciar la cámara automáticamente. Por favor, usa la opción de subir archivos.");
+        }
+      }
+      
         function stopCamera() {
             if (stream) stream.getTracks().forEach(track => track.stop());
         }
 
         function takePhotoAndProcess() {
             if (!stream) return alert("Cámara no iniciada.");
-            
             showLoading(true);
 
             const MAX_WIDTH = 1280; 
@@ -517,7 +487,6 @@
             setTimeout(() => { showLoading(false); }, 400); 
         }
 
-        // --- LÓGICA DE SUBIDA DE ARCHIVOS ---
         async function handleFileUpload(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
@@ -560,7 +529,6 @@
             });
         }
 
-        // --- MANEJO DE COLA ---
         function deletePhoto(index) {
             photos.splice(index, 1);
             renderQueue();
@@ -579,7 +547,6 @@
             document.getElementById('btnPhotos').disabled = photos.length === 0;
         }
 
-        // --- CONEXIÓN CON API 2: /api/generate-questions ---
         async function handleGenerateQuestions() {
             goToScreen(5);
             const box = document.getElementById('resultsBox');
@@ -593,7 +560,7 @@
                     body: JSON.stringify({
                         images: photos,
                         grade: currentGrade,
-                        questionTypes: selectedTypes // El backend sabrá si incluye "Ejercicios Gráficos (IA)"
+                        questionTypes: selectedTypes 
                     })
                 });
                 
@@ -624,13 +591,18 @@
                     </ul>`;
                 }
                 
-                // Muestra un aviso visual si la pregunta requiere imagen (FLUX)
-                const requiresImageBadge = q.requiresImage ? `<span class="badge-img">🖼️ Requiere Dibujo Mágico</span>` : '';
+                // Lógica visual: Si la IA mandó la URL de la imagen generada, la mostramos. Si no, pero la requería, mostramos la etiqueta.
+                let visualContent = '';
+                if (q.imageUrl) {
+                    visualContent = `<img src="${q.imageUrl}" class="flux-image" alt="Ilustración IA para la pregunta">`;
+                } else if (q.requiresImage) {
+                    visualContent = `<span class="badge-img">🖼️ Requiere Dibujo Mágico</span>`;
+                }
                 
                 box.innerHTML += `
                     <div class="question-item">
                         <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span style="font-size: 1.1rem;">${q.statement}</span>
-                        ${requiresImageBadge}
+                        ${visualContent}
                         <br><small style="color:var(--accent-blue); font-weight:bold;">[${q.type}]</small>
                         ${optionsHtml}
                     </div>
@@ -638,15 +610,13 @@
             });
         }
 
-        // --- EXPORT PDF LOGIC (CLIENT SIDE) ---
-        
         function exportQuestionsPDF() {
             if(!generatedQuestionsData) return;
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
             doc.setFontSize(22);
-            doc.setTextColor(242, 138, 63); // Orange
+            doc.setTextColor(242, 138, 63);
             doc.text("EXAMEN TUKU", 105, 20, null, null, "center");
             
             doc.setFontSize(12);
@@ -672,8 +642,7 @@
                 doc.setFont(undefined, 'normal');
                 y += (splitTitle.length * 7) + 2;
                 
-                // Placeholder para la imagen (Runware/Flux) si la requiere
-                if(q.requiresImage) {
+                if(q.requiresImage || q.imageUrl) {
                     doc.setDrawColor(200, 200, 200);
                     doc.setFillColor(245, 245, 245);
                     doc.rect(50, y, 110, 60, 'FD');
@@ -711,7 +680,7 @@
             const doc = new jsPDF();
             
             doc.setFontSize(18);
-            doc.setTextColor(244, 67, 54); // Red
+            doc.setTextColor(244, 67, 54);
             doc.text("TUKU - HOJA DE RESPUESTAS (Maestro)", 105, 20, null, null, "center");
             
             doc.setFontSize(12);
@@ -736,7 +705,7 @@
                 y += 7;
                 
                 doc.setFont(undefined, 'normal');
-                doc.setTextColor(76, 175, 80); // Green
+                doc.setTextColor(76, 175, 80); 
                 const splitAnswer = doc.splitTextToSize(`Rpta: ${q.answer}`, 160);
                 doc.text(splitAnswer, 30, y);
                 
