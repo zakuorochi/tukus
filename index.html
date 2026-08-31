@@ -67,24 +67,13 @@
             text-align: center;
             margin-bottom: 20px;
         }
-        
-        .logo-text {
-            font-size: 4rem;
-            font-weight: 900;
-            margin-bottom: -10px;
-            letter-spacing: 2px;
-            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
-        }
-        
-        .letter-T { color: #f06a5d; }
-        .letter-U1 { color: #f8c95a; }
-        .letter-K { color: #5eb28c; }
-        .letter-U2 { color: #f29c49; }
 
-        .mascot-img {
-            width: 120px;
+        .main-logo-img {
+            max-width: 220px;
+            width: 100%;
             height: auto;
             margin-bottom: 10px;
+            filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.1));
         }
 
         /* Control global */
@@ -325,13 +314,10 @@
 
         <button class="btn-home" id="btnHome" onclick="goToScreen(1)">🏠 Volver</button>
 
-        <!-- HEADER COMÚN (Logo y Mascota) -->
+        <!-- HEADER COMÚN (Logo unificado) -->
         <div class="logo-container" id="mainHeader">
-            <div class="logo-text">
-                <span class="letter-T">T</span><span class="letter-U1">U</span><span class="letter-K">K</span><span class="letter-U2">U</span>
-            </div>
-            <!-- Mascota Búho placeholder (usando un emoji o SVG básico por ahora, debes reemplazar el src con tu imagen real de tukus.site) -->
-            <img src="https://cdn-icons-png.flaticon.com/512/3069/3069172.png" alt="Mascota Tuku" class="mascot-img">
+            <!-- Cargando el nuevo logo unificado directamente desde la raíz -->
+            <img src="/logotuku.png" alt="Logo TUKU" class="main-logo-img">
         </div>
 
         <!-- 1. Inicio -->
