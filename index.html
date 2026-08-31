@@ -402,6 +402,7 @@
         let photos = []; 
         let selectedTypes = [];
         let generatedQuestionsData = null; 
+        let globalMasterImageUrl = null;
         
         const video = document.getElementById('videoElement');
         const canvas = document.getElementById('canvasElement');
@@ -547,7 +548,7 @@
             document.getElementById('btnPhotos').disabled = photos.length === 0;
         }
 
-        async function handleGenerateQuestions() {
+    async function handleGenerateQuestions() {
             goToScreen(5);
             const box = document.getElementById('resultsBox');
             box.innerHTML = '';
@@ -568,6 +569,7 @@
                 
                 if (response.ok && data.success && data.questions) {
                     generatedQuestionsData = data.questions; 
+                    globalMasterImageUrl = data.masterImageUrl || null;
                     renderQuestions(data.questions);
                 } else {
                     box.innerHTML = `<h3 style="color:red;">Ups! Algo salió mal:</h3><p>${data.message}</p>`;
@@ -583,6 +585,20 @@
         function renderQuestions(questions) {
             const box = document.getElementById('resultsBox');
             box.innerHTML = '';
+            
+            // Si existe la imagen maestra (Cuadrícula 2x2), la inyectamos al inicio del examen
+            if (globalMasterImageUrl) {
+                box.innerHTML += `
+                    <div class="question-item" style="text-align: center; border-color: var(--accent-yellow); background: #fffde7;">
+                        <h3 style="color: #f57f17; margin-bottom: 10px;">🎨 Cuadrícula Gráfica de Referencia</h3>
+                        <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Usa estas 4 imágenes para responder las preguntas del examen.</p>
+                        <img src="${globalMasterImageUrl}" class="flux-image" style="max-width: 100%; margin: 0 auto; border-radius: 12px; border: 3px solid #e0e0e0;" alt="Cuadrícula IA">
+                        <br>
+                        <a href="${globalMasterImageUrl}" target="_blank" style="display:inline-block; margin-top:10px; color:var(--accent-blue); font-weight:bold; text-decoration:none;">🔍 Abrir imagen en grande</a>
+                    </div>
+                `;
+            }
+
             questions.forEach(q => {
                 let optionsHtml = '';
                 if (q.options && q.options.length > 0) {
@@ -591,18 +607,9 @@
                     </ul>`;
                 }
                 
-                // Lógica visual: Si la IA mandó la URL de la imagen generada, la mostramos. Si no, pero la requería, mostramos la etiqueta.
-                let visualContent = '';
-                if (q.imageUrl) {
-                    visualContent = `<img src="${q.imageUrl}" class="flux-image" alt="Ilustración IA para la pregunta">`;
-                } else if (q.requiresImage) {
-                    visualContent = `<span class="badge-img">🖼️ Requiere Dibujo Mágico</span>`;
-                }
-                
                 box.innerHTML += `
                     <div class="question-item">
                         <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span style="font-size: 1.1rem;">${q.statement}</span>
-                        ${visualContent}
                         <br><small style="color:var(--accent-blue); font-weight:bold;">[${q.type}]</small>
                         ${optionsHtml}
                     </div>
