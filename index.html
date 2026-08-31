@@ -3,21 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TUKU.OS - Motor Educativo IA</title>
+    <title>TUKU - Aprende Jugando</title>
     <!-- Incluyendo jsPDF localmente desde CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
-            --primary: #10b981;
-            --primary-hover: #059669;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
+            --primary: #f28a3f; /* Orange from the image border/logo */
+            --primary-hover: #d97736;
+            --bg-color: #fdf6e3; /* Light cream background */
+            --card-bg: #fffbf0;
+            --text-main: #34495e; /* Softer dark blue for text */
+            --text-muted: #7f8c8d;
+            --border: #f28a3f; /* Orange borders */
+            --accent-blue: #4fa1c4; /* Blue from logo/text */
+            --accent-green: #68c07e; /* Green from logo */
+            --accent-yellow: #f8c95a; /* Yellow from logo */
+            --radius-large: 24px;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Comic Sans MS', 'Quicksand', 'Segoe UI', system-ui, sans-serif; }
 
         body {
             background-color: var(--bg-color);
@@ -26,20 +30,61 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
+            margin: 0;
+            background-image: linear-gradient(rgba(253, 246, 227, 0.85), rgba(253, 246, 227, 0.85)), url('https://www.transparenttextures.com/patterns/wood-pattern.png');
         }
 
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 100%; /* Take full width on mobile */
             background: var(--card-bg);
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-            padding: 40px;
+            border-radius: 0; /* Flat edges on mobile */
+            border: none;
+            box-shadow: none;
+            padding: 20px;
             position: relative;
-            min-height: 550px;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
+        }
+
+        /* Responsive max-width for larger screens (Totems/Tablets) */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 800px;
+                border-radius: var(--radius-large);
+                border: 8px solid var(--primary); /* Thick orange border */
+                box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+                min-height: 85vh;
+                margin: 20px;
+                padding: 40px;
+            }
+        }
+
+        /* TUKU Logo and Mascot Styles */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo-text {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: -10px;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+        
+        .letter-T { color: #f06a5d; }
+        .letter-U1 { color: #f8c95a; }
+        .letter-K { color: #5eb28c; }
+        .letter-U2 { color: #f29c49; }
+
+        .mascot-img {
+            width: 120px;
+            height: auto;
+            margin-bottom: 10px;
         }
 
         /* Control global */
@@ -47,52 +92,129 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: #f1f5f9;
-            border: none;
+            background: #fff;
+            border: 2px solid var(--border);
             padding: 8px 16px;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             display: none;
-            font-weight: 600;
-            color: var(--text-muted);
+            font-weight: bold;
+            color: var(--primary);
             transition: 0.2s;
+            z-index: 100;
+            box-shadow: 0 4px 0px var(--primary);
         }
-        .btn-home:hover { background: #e2e8f0; color: var(--text-main); }
+        .btn-home:active { transform: translateY(4px); box-shadow: none; }
 
         /* Pantallas */
-        .screen { display: none; flex: 1; flex-direction: column; justify-content: center; animation: fadeIn 0.3s ease; }
+        .screen { display: none; flex: 1; flex-direction: column; justify-content: flex-start; animation: fadeIn 0.4s ease; }
         .screen.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        h1, h2 { color: #0f172a; margin-bottom: 15px; }
-        p.subtitle { color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; }
+        h1, h2 { color: var(--accent-blue); text-align: center; margin-bottom: 15px; font-weight: 800; line-height: 1.2;}
+        h1 { font-size: 2rem; }
+        h2 { font-size: 1.6rem; }
+        p.subtitle { color: var(--text-main); text-align: center; margin-bottom: 25px; line-height: 1.5; font-size: 1.1rem; font-weight: 500;}
 
-        /* Botones */
-        .btn { padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;}
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
-        .btn-outline:hover { background: #f1f5f9; }
-        .footer-nav { display: flex; justify-content: space-between; margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px; }
+        /* Botones estilo juego infantil */
+        .btn { 
+            padding: 16px 28px; 
+            border-radius: 16px; 
+            font-weight: 800; 
+            font-size: 1.1rem;
+            cursor: pointer; 
+            border: none; 
+            transition: 0.2s; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-primary { 
+            background: var(--primary); 
+            color: white; 
+            border: 3px solid #d97736;
+            box-shadow: 0 6px 0px #d97736;
+        }
+        .btn-primary:active:not(:disabled) { 
+            transform: translateY(6px);
+            box-shadow: none;
+        }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: 0 2px 0px #d97736; transform: translateY(4px);}
+        
+        .btn-outline { 
+            background: #fff; 
+            border: 3px solid var(--accent-blue); 
+            color: var(--accent-blue); 
+            box-shadow: 0 6px 0px var(--accent-blue);
+        }
+        .btn-outline:active { 
+            transform: translateY(6px);
+            box-shadow: none;
+        }
+        
+        .footer-nav { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; padding-top: 20px; }
+        @media (min-width: 600px) {
+            .footer-nav { flex-direction: row; justify-content: space-between; }
+            .footer-nav .btn { flex: 1; max-width: 45%; }
+        }
 
         /* Grados y Opciones */
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        @media (min-width: 600px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
+        .grid-2 { display: grid; grid-template-columns: repeat(1, 1fr); gap: 15px; }
+        @media (min-width: 600px) { .grid-2 { grid-template-columns: repeat(2, 1fr); } }
         
         .card-select {
-            padding: 20px; border: 2px solid var(--border); border-radius: 12px;
-            text-align: center; cursor: pointer; transition: 0.2s; font-weight: bold;
+            padding: 25px 15px; 
+            background: #fff;
+            border: 3px solid #e0e0e0; 
+            border-radius: 20px;
+            text-align: center; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            box-shadow: 0 4px 0px #e0e0e0;
         }
-        .card-select.selected { border-color: var(--primary); background: #ecfdf5; color: var(--primary-hover); }
+        .card-select:active { transform: translateY(4px); box-shadow: none; }
+        .card-select.selected { 
+            border-color: var(--accent-green); 
+            background: #e8f5e9; 
+            color: var(--accent-green); 
+            box-shadow: 0 4px 0px var(--accent-green);
+        }
+        
+        /* Opcion Especial Graficos */
+        .card-select.special {
+            border-color: var(--accent-yellow);
+            background: #fffde7;
+            color: #f57f17;
+            box-shadow: 0 4px 0px var(--accent-yellow);
+            grid-column: 1 / -1; /* Ocupa todo el ancho */
+            margin-top: 10px;
+        }
+        .card-select.special.selected {
+            background: var(--accent-yellow);
+            color: white;
+            border-color: #f57f17;
+            box-shadow: 0 4px 0px #f57f17;
+        }
 
         /* Cámara y Archivos */
         .camera-view {
-            /* INCREASED HEIGHT TO DOUBLE */
-            height: 500px; 
-            background: #1e293b; border-radius: 12px; margin-bottom: 15px;
+            height: 60vh; /* Dynamic height based on screen size */
+            min-height: 400px;
+            background: #e6f7ff; /* Light blue background as in reference */
+            border-radius: var(--radius-large); 
+            margin-bottom: 20px;
             display: flex; align-items: center; justify-content: center; position: relative;
             overflow: hidden; 
+            border: 4px solid var(--accent-blue);
         }
         
         #videoElement {
@@ -100,37 +222,95 @@
         }
 
         .scanner-frame { 
-            width: 80%; height: 80%; border: 2px dashed rgba(255,255,255,0.7); 
-            display: flex; align-items: center; justify-content: center; color: white; 
+            width: 85%; height: 85%; 
+            border: 4px dashed var(--accent-blue); 
+            border-radius: 50%; /* Circle frame as in reference */
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            color: var(--accent-blue); 
+            font-weight: 900;
+            font-size: 1.2rem;
+            text-align: center;
             z-index: 2; position: relative;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(2px);
+        }
+        
+        .camera-icon {
+            font-size: 3rem;
+            margin-top: 10px;
         }
         
         #canvasElement { display: none; }
 
         .upload-section {
-            margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);
+            margin-top: 10px; padding-top: 15px; 
             display: flex; flex-direction: column; align-items: center;
         }
 
-        .queue-container { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; }
+        .queue-container { display: flex; gap: 15px; overflow-x: auto; padding: 15px 5px; }
         .thumb { 
-            width: 60px; height: 60px; background: #e2e8f0; border-radius: 8px; 
+            width: 80px; height: 80px; background: #fff; 
+            border: 3px solid var(--primary);
+            border-radius: 12px; 
             display: flex; align-items: center; justify-content: center; 
             position: relative; font-size: 12px; background-size: cover; background-position: center;
+            box-shadow: 0 4px 0px var(--primary);
+            flex-shrink: 0;
         }
-        .thumb-del { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; border: none; cursor: pointer; font-size: 10px; }
+        .thumb-del { 
+            position: absolute; top: -8px; right: -8px; 
+            background: #ff5252; color: white; 
+            border-radius: 50%; width: 24px; height: 24px; 
+            border: 2px solid white; cursor: pointer; 
+            font-weight: bold; display: flex; align-items: center; justify-content: center;
+        }
 
         /* Resultados */
-        .results-box { max-height: 300px; overflow-y: auto; background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
-        .question-item { padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--border); }
+        .results-box { 
+            flex: 1; 
+            overflow-y: auto; 
+            background: #fff; 
+            padding: 20px; 
+            border-radius: var(--radius-large); 
+            border: 4px solid #e0e0e0; 
+            margin-bottom: 20px;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .question-item { 
+            padding: 15px; 
+            background: var(--bg-color);
+            border-radius: 12px;
+            margin-bottom: 15px; 
+            border: 2px solid var(--border); 
+        }
         
+        .badge-img {
+            background: var(--accent-yellow);
+            color: #333;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
         /* Loading Overlay */
         .loading-overlay {
             display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.9); z-index: 100;
-            align-items: center; justify-content: center; flex-direction: column; border-radius: 16px;
+            background: rgba(253, 246, 227, 0.95); z-index: 1000;
+            align-items: center; justify-content: center; flex-direction: column; border-radius: inherit;
         }
         .loading-overlay.active { display: flex; }
+        
+        .spinner {
+            width: 60px; height: 60px;
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -138,23 +318,39 @@
     <div class="container">
         <!-- Overlay de carga global -->
         <div class="loading-overlay" id="loadingOverlay">
-            <h3 style="color: var(--primary);">Procesando con TUKU.OS...</h3>
-            <p>Por favor, espera.</p>
+            <div class="spinner"></div>
+            <h2 style="color: var(--primary);">¡La magia de TUKU está trabajando!</h2>
+            <p style="font-weight: bold; color: var(--text-muted);">Por favor, espera un momentito...</p>
         </div>
 
-        <button class="btn-home" id="btnHome" onclick="goToScreen(1)">🏠 Volver al inicio</button>
+        <button class="btn-home" id="btnHome" onclick="goToScreen(1)">🏠 Volver</button>
+
+        <!-- HEADER COMÚN (Logo y Mascota) -->
+        <div class="logo-container" id="mainHeader">
+            <div class="logo-text">
+                <span class="letter-T">T</span><span class="letter-U1">U</span><span class="letter-K">K</span><span class="letter-U2">U</span>
+            </div>
+            <!-- Mascota Búho placeholder (usando un emoji o SVG básico por ahora, debes reemplazar el src con tu imagen real de tukus.site) -->
+            <img src="https://cdn-icons-png.flaticon.com/512/3069/3069172.png" alt="Mascota Tuku" class="mascot-img">
+        </div>
 
         <!-- 1. Inicio -->
-        <div class="screen active" id="screen1" style="text-align: center; align-items: center;">
-            <h1>TUKU.OS</h1>
-            <p class="subtitle">Módulo de evaluación inteligente. Convierte los apuntes de los cuadernos en dinámicas de aprendizaje interactivo.</p>
-            <button class="btn btn-primary" onclick="goToScreen(2)">Acceder</button>
+        <div class="screen active" id="screen1">
+            <h1>¡Buenos días niños!<br>¿Qué desean aprender hoy?</h1>
+            <p class="subtitle">Toma fotos de tus cuadernos y creemos un juego de preguntas genial.</p>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <!-- QR Code placeholder -->
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tukus.site" alt="QR Code" style="border-radius: 12px; margin-bottom: 20px;">
+                <br>
+                <button class="btn btn-primary" style="width: 100%; max-width: 300px;" onclick="goToScreen(2)">▶ ¡EMPEZAR AHORA!</button>
+            </div>
         </div>
 
         <!-- 2. Selección de Grado -->
         <div class="screen" id="screen2">
-            <h2>Nivel del Alumno</h2>
-            <p class="subtitle">Selecciona el grado para ajustar la complejidad de la IA.</p>
+            <h2>¿En qué grado estás?</h2>
+            <p class="subtitle">Elige tu nivel para hacer preguntas a tu medida.</p>
             <div class="grid-3">
                 <div class="card-select grade-opt" onclick="selectGrade(1, this)">1° Primaria</div>
                 <div class="card-select grade-opt" onclick="selectGrade(2, this)">2° Primaria</div>
@@ -164,71 +360,81 @@
                 <div class="card-select grade-opt" onclick="selectGrade(6, this)">6° Primaria</div>
             </div>
             <div class="footer-nav">
-                <button class="btn btn-outline" onclick="goToScreen(1)">Atrás</button>
-                <button class="btn btn-primary" id="btnGrade" disabled onclick="goToScreen(3)">Siguiente</button>
+                <button class="btn btn-outline" onclick="goToScreen(1)">⬅ Atrás</button>
+                <button class="btn btn-primary" id="btnGrade" disabled onclick="goToScreen(3)">Siguiente ➡</button>
             </div>
         </div>
 
         <!-- 3. Cámara y Escáner -->
         <div class="screen" id="screen3">
-            <h2>Escanear Cuaderno</h2>
-            <p class="subtitle">Encuadra la página o sube las fotos directamente desde tu dispositivo.</p>
+            <h2>Escanea tu cuaderno</h2>
             
             <div class="camera-view">
                 <video id="videoElement" autoplay playsinline></video>
-                <div class="scanner-frame">Vista de Cámara</div>
+                <div class="scanner-frame">
+                    <span>CÁMARA DE<br>ESCANEO ACTIVA</span>
+                    <span class="camera-icon">📷</span>
+                </div>
             </div>
             
             <canvas id="canvasElement"></canvas>
 
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <button class="btn btn-primary" onclick="takePhotoAndProcess()">📸 Capturar cámara</button>
-                <span id="fotoCount" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">0 fotos</span>
+            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
+                <button class="btn btn-primary" style="width: 100%;" onclick="takePhotoAndProcess()">📸 CAPTURAR FOTO</button>
+                <span id="fotoCount" style="color: var(--accent-blue); font-size: 1.2rem; font-weight: 900;">0 FOTOS LISTAS</span>
             </div>
 
             <div class="upload-section">
                 <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
-                <button class="btn btn-outline" onclick="document.getElementById('fileInput').click()">
-                    📁 Subir archivos locales (JPG/PNG)
+                <button class="btn btn-outline" style="width: 100%;" onclick="document.getElementById('fileInput').click()">
+                    📁 Subir fotos guardadas
                 </button>
             </div>
 
             <div class="queue-container" id="queueBox"></div>
             
             <div class="footer-nav">
-                <button class="btn btn-outline" onclick="stopCamera(); goToScreen(2)">Atrás</button>
-                <button class="btn btn-primary" id="btnPhotos" disabled onclick="stopCamera(); goToScreen(4)">Continuar</button>
+                <button class="btn btn-outline" onclick="stopCamera(); goToScreen(2)">⬅ Atrás</button>
+                <button class="btn btn-primary" id="btnPhotos" disabled onclick="stopCamera(); goToScreen(4)">¡Listo! ➡</button>
             </div>
         </div>
 
         <!-- 4. Tipo de Preguntas -->
         <div class="screen" id="screen4">
-            <h2>Estructura del Cuestionario</h2>
-            <p class="subtitle">Selecciona hasta 4 tipos de preguntas.</p>
+            <h2>¿Cómo quieres jugar?</h2>
+            <p class="subtitle">Elige los tipos de pregunta (¡puedes marcar varios!).</p>
             <div class="grid-2">
-                <div class="card-select type-opt" onclick="toggleType('Opción Múltiple', this)">Opción Múltiple</div>
-                <div class="card-select type-opt" onclick="toggleType('Completar Espacios', this)">Completar Espacios</div>
-                <div class="card-select type-opt" onclick="toggleType('Preguntas y Respuestas', this)">Preguntas y Respuestas</div>
-                <div class="card-select type-opt" onclick="toggleType('Verdadero / Falso', this)">Verdadero / Falso</div>
+                <div class="card-select type-opt" onclick="toggleType('Opción Múltiple', this)">Opción Múltiple 🔠</div>
+                <div class="card-select type-opt" onclick="toggleType('Completar Espacios', this)">Completar ___ ✍️</div>
+                <div class="card-select type-opt" onclick="toggleType('Preguntas y Respuestas', this)">Preguntas Breves 💬</div>
+                <div class="card-select type-opt" onclick="toggleType('Verdadero / Falso', this)">Verdad o Falso ⚖️</div>
+                
+                <!-- NUEVO BOTÓN PARA DIBUJOS GENERADOS POR IA (FLUX) -->
+                <div class="card-select type-opt special" onclick="toggleType('Ejercicios Gráficos (IA)', this)">
+                    🎨 ¡Añadir Dibujos Mágicos (IA)! 🌟<br>
+                    <small style="font-size: 0.9rem; font-weight: normal;">El sistema creará imágenes para geometría, ciencias, etc.</small>
+                </div>
             </div>
+            
             <div class="footer-nav">
-                <button class="btn btn-outline" onclick="goToScreen(3)">Atrás</button>
-                <button class="btn btn-primary" id="btnGenerate" disabled onclick="handleGenerateQuestions()">Generar Preguntas</button>
+                <button class="btn btn-outline" onclick="goToScreen(3)">⬅ Atrás</button>
+                <button class="btn btn-primary" id="btnGenerate" disabled onclick="handleGenerateQuestions()">¡Crear Examen! ✨</button>
             </div>
         </div>
 
         <!-- 5. Resultados -->
         <div class="screen" id="screen5">
-            <h2>Cuestionario Generado</h2>
-            <p class="subtitle">20 preguntas listas basadas en los cuadernos escaneados.</p>
+            <h2>¡Tu examen está listo!</h2>
+            <p class="subtitle">Hemos creado preguntas súper divertidas.</p>
             <div class="results-box" id="resultsBox">
                 <!-- Las preguntas se inyectarán aquí -->
             </div>
-            <div class="footer-nav" style="justify-content: flex-start; gap: 15px;">
-                <!-- Updated buttons for two PDFs -->
-                <button class="btn btn-primary" onclick="exportQuestionsPDF()">📄 PDF Preguntas</button>
-                <button class="btn btn-outline" onclick="exportAnswersPDF()">📄 PDF Respuestas</button>
-                <button class="btn btn-outline" onclick="handleGenerateQuestions()">🔄 Volver a generar</button>
+            <div class="footer-nav" style="flex-direction: column; gap: 10px;">
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <button class="btn btn-primary" style="flex:1; background: var(--accent-green); border-color: #4caf50; box-shadow: 0 6px 0px #4caf50;" onclick="exportQuestionsPDF()">📄 Imprimir Examen</button>
+                    <button class="btn btn-outline" style="flex:1; border-color: #f44336; color: #f44336; box-shadow: 0 6px 0px #f44336;" onclick="exportAnswersPDF()">🗝️ Clave Maestro</button>
+                </div>
+                <button class="btn btn-outline" style="width: 100%; border-color: var(--accent-yellow); color: #f57f17; box-shadow: 0 6px 0px var(--accent-yellow);" onclick="handleGenerateQuestions()">🔄 ¡Quiero otras preguntas!</button>
             </div>
         </div>
     </div>
@@ -253,6 +459,15 @@
         function goToScreen(num) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen' + num).classList.add('active');
+            
+            // Ocultar cabecera principal en la cámara para dar más espacio
+            const header = document.getElementById('mainHeader');
+            if(num === 3) {
+                header.style.display = 'none';
+            } else {
+                header.style.display = 'block';
+            }
+
             document.getElementById('btnHome').style.display = num > 1 ? 'block' : 'none';
             
             if(num === 1) resetApp();
@@ -281,7 +496,7 @@
         // --- LÓGICA DE CÁMARA ---
         async function startCamera() {
             try {
-                // Request higher resolution explicitly
+                // Request back camera with high resolution
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: 'environment',
@@ -291,7 +506,7 @@
                 });
                 video.srcObject = stream;
             } catch (err) {
-                console.warn("Cámara no disponible, pero puedes usar la subida de archivos.", err);
+                console.warn("Cámara no disponible.", err);
             }
         }
 
@@ -382,7 +597,7 @@
                         <button class="thumb-del" onclick="deletePhoto(${i})">X</button>
                     </div>`;
             });
-            document.getElementById('fotoCount').innerText = `${photos.length} fotos`;
+            document.getElementById('fotoCount').innerText = `${photos.length} FOTO${photos.length !== 1 ? 'S' : ''} LISTA${photos.length !== 1 ? 'S' : ''}`;
             document.getElementById('btnPhotos').disabled = photos.length === 0;
         }
 
@@ -390,7 +605,7 @@
         async function handleGenerateQuestions() {
             goToScreen(5);
             const box = document.getElementById('resultsBox');
-            box.innerHTML = '<p style="text-align:center;">Analizando cuadernos con TUKU.ia...</p>';
+            box.innerHTML = '';
             showLoading(true);
             
             try {
@@ -400,7 +615,7 @@
                     body: JSON.stringify({
                         images: photos,
                         grade: currentGrade,
-                        questionTypes: selectedTypes
+                        questionTypes: selectedTypes // El backend sabrá si incluye "Ejercicios Gráficos (IA)"
                     })
                 });
                 
@@ -410,32 +625,35 @@
                     generatedQuestionsData = data.questions; 
                     renderQuestions(data.questions);
                 } else {
-                    box.innerHTML = `<p style="color:red; font-weight:bold;">Error de IA:</p><p style="color:red;">${data.message}</p><p style="font-size:12px; color:grey;">${data.error || ''}</p>`;
+                    box.innerHTML = `<h3 style="color:red;">Ups! Algo salió mal:</h3><p>${data.message}</p>`;
                 }
             } catch(err) {
                 console.error(err);
-                box.innerHTML = '<p style="color:red;">Error de red conectando con el motor de IA.</p>';
+                box.innerHTML = '<h3 style="color:red;">No hay internet 📶</h3><p>Revisa tu conexión y vuelve a intentar.</p>';
             } finally {
                 showLoading(false);
             }
         }
 
-        // Modified render function to hide the answer from the main screen for the students
         function renderQuestions(questions) {
             const box = document.getElementById('resultsBox');
             box.innerHTML = '';
             questions.forEach(q => {
                 let optionsHtml = '';
                 if (q.options && q.options.length > 0) {
-                    optionsHtml = `<ul style="margin-left:20px; font-size:14px; color:var(--text-muted);">
-                        ${q.options.map(opt => `<li>${opt}</li>`).join('')}
+                    optionsHtml = `<ul style="margin-left:20px; font-size:1.1rem; color:var(--text-muted); list-style-type: none; padding-top: 5px;">
+                        ${q.options.map((opt, i) => `<li style="margin-bottom: 5px;"><strong>${['A','B','C','D'][i]})</strong> ${opt}</li>`).join('')}
                     </ul>`;
                 }
                 
+                // Muestra un aviso visual si la pregunta requiere imagen (FLUX)
+                const requiresImageBadge = q.requiresImage ? `<span class="badge-img">🖼️ Requiere Dibujo Mágico</span>` : '';
+                
                 box.innerHTML += `
                     <div class="question-item">
-                        <strong>Pregunta ${q.id}:</strong> ${q.statement}
-                        <br><small style="color:var(--primary); font-weight:bold;">[${q.type}]</small>
+                        <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span style="font-size: 1.1rem;">${q.statement}</span>
+                        ${requiresImageBadge}
+                        <br><small style="color:var(--accent-blue); font-weight:bold;">[${q.type}]</small>
                         ${optionsHtml}
                     </div>
                 `;
@@ -443,23 +661,25 @@
         }
 
         // --- EXPORT PDF LOGIC (CLIENT SIDE) ---
-        // Using jsPDF to handle it directly in the browser to avoid server load
         
         function exportQuestionsPDF() {
             if(!generatedQuestionsData) return;
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            doc.setFontSize(18);
-            doc.setTextColor(16, 185, 129); // Primary green
-            doc.text("TUKU.OS - Cuestionario de Evaluacion", 20, 20);
+            doc.setFontSize(22);
+            doc.setTextColor(242, 138, 63); // Orange
+            doc.text("EXAMEN TUKU", 105, 20, null, null, "center");
             
             doc.setFontSize(12);
             doc.setTextColor(100, 116, 139);
-            doc.text(`Nivel: ${currentGrade}° Primaria`, 20, 30);
+            doc.text(`Nombre: _________________________   Grado: ${currentGrade}° Primaria`, 20, 35);
+            
+            doc.setLineWidth(0.5);
+            doc.line(20, 40, 190, 40);
             
             doc.setTextColor(30, 41, 59);
-            let y = 45;
+            let y = 55;
             
             generatedQuestionsData.forEach((q, index) => {
                 if(y > 270) {
@@ -467,23 +687,36 @@
                     y = 20;
                 }
                 
-                // Question text with word wrap
-                const splitTitle = doc.splitTextToSize(`${index + 1}. ${q.statement}`, 170);
+                doc.setFont(undefined, 'bold');
+                const titleStr = `${index + 1}. ${q.statement}`;
+                const splitTitle = doc.splitTextToSize(titleStr, 170);
                 doc.text(splitTitle, 20, y);
-                y += (splitTitle.length * 7) + 5;
+                doc.setFont(undefined, 'normal');
+                y += (splitTitle.length * 7) + 2;
+                
+                // Placeholder para la imagen (Runware/Flux) si la requiere
+                if(q.requiresImage) {
+                    doc.setDrawColor(200, 200, 200);
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(50, y, 110, 60, 'FD');
+                    doc.setTextColor(150, 150, 150);
+                    doc.text("[Espacio reservado para ilustración IA]", 105, y + 30, null, null, "center");
+                    doc.setTextColor(30, 41, 59);
+                    y += 65;
+                }
                 
                 if (q.type === 'Opción Múltiple' && q.options) {
                     const letters = ['a)', 'b)', 'c)', 'd)'];
                     q.options.forEach((opt, i) => {
-                        doc.text(`${letters[i]} ${opt}`, 30, y);
-                        y += 7;
+                        if(y > 280) { doc.addPage(); y = 20; }
+                        doc.text(`${letters[i]} ${opt}`, 25, y);
+                        y += 8;
                     });
                     y += 5;
                 } else if (q.type === 'Verdadero / Falso') {
-                    doc.text("(  ) Verdadero     (  ) Falso", 30, y);
+                    doc.text("(   ) Verdadero       (   ) Falso", 25, y);
                     y += 12;
                 } else {
-                    // Lines for written answers
                     doc.line(20, y, 190, y);
                     y += 10;
                     doc.line(20, y, 190, y);
@@ -491,7 +724,7 @@
                 }
             });
             
-            doc.save("TUKU_Cuestionario_Preguntas.pdf");
+            doc.save("TUKU_Examen_Alumno.pdf");
         }
 
         function exportAnswersPDF() {
@@ -500,12 +733,15 @@
             const doc = new jsPDF();
             
             doc.setFontSize(18);
-            doc.setTextColor(220, 38, 38); // Red color for answers
-            doc.text("TUKU.OS - HOJA DE RESPUESTAS (Maestro)", 20, 20);
+            doc.setTextColor(244, 67, 54); // Red
+            doc.text("TUKU - HOJA DE RESPUESTAS (Maestro)", 105, 20, null, null, "center");
             
             doc.setFontSize(12);
             doc.setTextColor(100, 116, 139);
-            doc.text(`Nivel: ${currentGrade}° Primaria`, 20, 30);
+            doc.text(`Grado: ${currentGrade}° Primaria`, 20, 30);
+            
+            doc.setLineWidth(0.5);
+            doc.line(20, 35, 190, 35);
             
             doc.setTextColor(30, 41, 59);
             let y = 45;
@@ -516,23 +752,21 @@
                     y = 20;
                 }
                 
-                // Shortened statement
-                const shortStatement = q.statement.substring(0, 50) + "...";
+                const shortStatement = q.statement.length > 70 ? q.statement.substring(0, 70) + "..." : q.statement;
                 doc.setFont(undefined, 'bold');
                 doc.text(`${index + 1}. ${shortStatement}`, 20, y);
                 y += 7;
                 
-                // Print the actual answer
                 doc.setFont(undefined, 'normal');
-                doc.setTextColor(16, 185, 129); // Green text for correct answer
-                const splitAnswer = doc.splitTextToSize(`Respuesta: ${q.answer}`, 160);
+                doc.setTextColor(76, 175, 80); // Green
+                const splitAnswer = doc.splitTextToSize(`Rpta: ${q.answer}`, 160);
                 doc.text(splitAnswer, 30, y);
                 
-                doc.setTextColor(30, 41, 59); // Reset color
+                doc.setTextColor(30, 41, 59); 
                 y += (splitAnswer.length * 7) + 8;
             });
             
-            doc.save("TUKU_Cuestionario_Respuestas.pdf");
+            doc.save("TUKU_Clave_Respuestas.pdf");
         }
     </script>
 </body>
