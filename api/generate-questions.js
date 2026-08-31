@@ -28,27 +28,29 @@ export default async function handler(req, res) {
             }
         }));
 
-        // Validación más robusta: buscamos si algún tipo incluye la palabra "Gráficos"
         const requestsImages = questionTypes.some(type => type.includes('Gráficos'));
 
+        // Modificación del Prompt: Un solo prompt maestro para 4 paneles
         const promptText = `
-        Eres un pedagogo experto. Analiza las fotos de los apuntes escolares adjuntos.
+        Eres un pedagogo experto. Analiza las fotos de los apuntes adjuntos.
         Genera 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria.
         Tipos de pregunta requeridos: ${questionTypes.join(', ')}.
         
-        ${requestsImages ? `ATENCIÓN: Se solicitaron ejercicios gráficos. Para algunas preguntas, establece "requiresImage": true y escribe en "imagePrompt" una descripción corta EN INGLÉS de la ilustración necesaria. Por ejemplo: "a simple line art illustration of a plant cell, educational style".` : ''}
+        ${requestsImages ? `ATENCIÓN: El usuario pidió ejercicios gráficos. NO pidas imágenes individuales. 
+        En su lugar, crea UN SOLO "masterImagePrompt" EN INGLÉS que describa una cuadrícula de 4 secciones (2x2 grid educational image). 
+        Ejemplo: "A 2x2 grid educational illustration. Section 1: Parts of a flower. Section 2: A plant cell. Section 3: Plantae kingdom chart. Section 4: Fungi kingdom chart."
+        Además, asegúrate de que al menos 4 de tus preguntas hagan referencia a esta imagen (Ejemplo: "Observa la sección 1 de la cuadrícula. ¿Cuál es...?").` : ''}
 
-        Devuelve un objeto JSON con esta estructura exacta:
+        Devuelve un objeto JSON con esta estructura exacta sin caracteres Markdown:
         {
+          "masterImagePrompt": "El prompt de la cuadrícula aquí (solo si pidieron gráficos, sino vacío)",
           "questions": [
             {
               "id": 1,
               "type": "Opción Múltiple", 
               "statement": "El texto de la pregunta...",
               "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
-              "answer": "La respuesta correcta",
-              "requiresImage": false,
-              "imagePrompt": "" 
+              "answer": "La respuesta correcta"
             }
           ]
         }
@@ -56,49 +58,48 @@ export default async function handler(req, res) {
 
         console.log("Enviando petición a Gemini...");
         const result = await model.generateContent([promptText, ...imageParts]);
-        const parsedData = JSON.parse(result.response.text());
+        
+        let rawText = result.response.text();
+        rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) rawText = jsonMatch[0];
 
+        const parsedData = JSON.parse(rawText);
         let finalQuestions = parsedData.questions;
+        let masterImageUrl = null;
 
-        // Llamada a Runware (FLUX)
-        if (requestsImages && process.env.RUNWARE_API_KEY) {
-            console.log("Procesando imágenes con Runware FLUX...");
-            
-            finalQuestions = await Promise.all(parsedData.questions.map(async (q) => {
-                if (q.requiresImage && q.imagePrompt) {
-                    try {
-                        const runwareResponse = await fetch('https://api.runware.ai/v1', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify([{
-                                taskType: "imageInference",
-                                taskUUID: crypto.randomUUID(),
-                                positivePrompt: q.imagePrompt,
-                                model: "bfl-flux-2-klein-4b",
-                                width: 512, // Reducido para mayor velocidad y menor peso en el PDF
-                                height: 512,
-                                CFGScale: 3, // Parámetro recomendado para FLUX
-                                steps: 20
-                            }])
-                        });
-                        
-                        const rwData = await runwareResponse.json();
-                        
-                        if (rwData && rwData.data && rwData.data[0] && rwData.data[0].imageURL) {
-                            q.imageUrl = rwData.data[0].imageURL;
-                            console.log(`Imagen generada para pregunta ${q.id}`);
-                        }
-                    } catch (err) {
-                        console.error(`Error de Runware en pregunta ${q.id}:`, err);
-                    }
+        // Llamada ÚNICA a Runware
+        if (requestsImages && parsedData.masterImagePrompt && process.env.RUNWARE_API_KEY) {
+            console.log("Procesando CUADRÍCULA MAESTRA con Runware FLUX...");
+            try {
+                const runwareResponse = await fetch('https://api.runware.ai/v1', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.RUNWARE_API_KEY}` },
+                    body: JSON.stringify([{
+                        taskType: "imageInference",
+                        taskUUID: crypto.randomUUID(),
+                        positivePrompt: parsedData.masterImagePrompt,
+                        model: "bfl-flux-2-klein-4b",
+                        width: 1024, // Alta resolución para acomodar las 4 imágenes
+                        height: 1024,
+                        CFGScale: 3, 
+                        steps: 25
+                    }])
+                });
+                const rwData = await runwareResponse.json();
+                if (rwData && rwData.data && rwData.data[0] && rwData.data[0].imageURL) {
+                    masterImageUrl = rwData.data[0].imageURL;
                 }
-                return q;
-            }));
+            } catch (err) {
+                console.error(`Error de Runware en Cuadrícula Maestra:`, err);
+            }
         }
 
-        return res.status(200).json({ success: true, questions: finalQuestions });
+        return res.status(200).json({ 
+            success: true, 
+            questions: finalQuestions,
+            masterImageUrl: masterImageUrl
+        });
 
     } catch (error) {
         console.error('Error general:', error);
@@ -107,8 +108,5 @@ export default async function handler(req, res) {
 }
 
 export const config = {
-    api: {
-        bodyParser: { sizeLimit: '4mb' },
-        responseLimit: false,
-    },
+    api: { bodyParser: { sizeLimit: '4mb' }, responseLimit: false },
 };
