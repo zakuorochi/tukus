@@ -19,16 +19,13 @@ export default async function handler(req, res) {
             return res.status(400).json({ success: false, message: 'Faltan parámetros (imágenes, grado o tipos de pregunta)' });
         }
 
-        // 2. Inicializar la API de Gemini
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         
-        // Usamos el modelo solicitado, forzando la salida a JSON
         const model = genAI.getGenerativeModel({ 
             model: "gemini-3.1-flash-lite",
             generationConfig: { responseMimeType: "application/json" }
         });
 
-        // 3. Preparar las imágenes para la API de Gemini
         const imageParts = images.map(imgBase64 => {
             const base64Data = imgBase64.replace(/^data:image\/\w+;base64,/, '');
             return {
@@ -39,49 +36,90 @@ export default async function handler(req, res) {
             };
         });
 
-        // 4. El "Prompt" (Instrucciones precisas al motor IA)
+        // Verificamos si el usuario solicitó imágenes
+        const requestsImages = questionTypes.includes('Ejercicios Gráficos (IA)');
+
+        // 4. Prompt actualizado con instrucciones para imágenes
         const promptText = `
         Eres un experto pedagogo, paleógrafo y creador de material educativo para niños.
-        Tu tarea es analizar las imágenes adjuntas, que son fotos de cuadernos escolares escritos a mano.
-        Debes leer la información (incluso si la caligrafía infantil es difícil) y generar exactamente 20 preguntas evaluativas basadas EXCLUSIVAMENTE en el contenido de esos apuntes.
+        Tu tarea es analizar las imágenes adjuntas (fotos de cuadernos escolares escritos a mano).
+        Genera exactamente 20 preguntas evaluativas basadas EXCLUSIVAMENTE en esos apuntes.
 
         Criterios de adaptación:
-        - El estudiante cursa el ${grade}° grado de primaria. Ajusta el vocabulario, la dificultad y el tono de las respuestas a ese nivel cognitivo.
-        - Los tipos de pregunta que debes generar son estrictamente de estas categorías: ${questionTypes.join(', ')}.
+        - El estudiante cursa el ${grade}° grado de primaria. Ajusta el vocabulario y dificultad.
+        - Tipos de pregunta: ${questionTypes.join(', ')}.
+        ${requestsImages ? `- ATENCIÓN: El usuario ha solicitado Ejercicios Gráficos. Para temas de geometría, ciencias, biología o conjuntos, incluye preguntas que requieran una imagen (requiresImage: true). Genera un imagePrompt detallado EN INGLÉS para que un modelo de generación de imágenes (FLUX) ilustre el concepto. Mantenlo en estilo 'educational textbook illustration, minimalist vector, clear lines'.` : ''}
 
-        Estructura de la salida:
-        Debes devolver ÚNICAMENTE un objeto JSON válido, con la siguiente estructura exacta:
+        Estructura de la salida (JSON exacto):
         {
           "questions": [
             {
               "id": 1,
               "type": "Opción Múltiple", 
               "statement": "Pregunta formulada",
-              "options": ["Opción 1", "Opción 2", "Opción 3", "Opción 4"], // Solo para Opción Múltiple, si no, déjalo vacío []
-              "answer": "Respuesta correcta o sugerida"
+              "options": ["Opción 1", "Opción 2", "Opción 3", "Opción 4"],
+              "answer": "Respuesta correcta o sugerida",
+              "requiresImage": false,
+              "imagePrompt": "" 
             }
           ]
         }
         `;
 
-        // 5. Llamada multimodal a Gemini
         const requestContent = [promptText, ...imageParts];
         
         console.log("Enviando petición a Gemini...");
         const result = await model.generateContent(requestContent);
         const responseText = result.response.text();
 
-        // 6. Parseo del resultado JSON (Ya no necesita Regex porque forzamos JSON en la configuración)
         const parsedData = JSON.parse(responseText);
 
-        // 7. Retornar al frontend
+        // 5. Interceptar JSON y llamar a Runware (FLUX) en paralelo
+        let finalQuestions = parsedData.questions;
+
+        if (requestsImages && process.env.RUNWARE_API_KEY) {
+            console.log("Procesando generación de imágenes con Runware...");
+            
+            finalQuestions = await Promise.all(parsedData.questions.map(async (q) => {
+                if (q.requiresImage && q.imagePrompt) {
+                    try {
+                        const runwareResponse = await fetch('https://api.runware.ai/v1', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${process.env.RUNWARE_API_KEY}`
+                            },
+                            body: JSON.stringify([{
+                                taskType: "imageInference",
+                                taskUUID: crypto.randomUUID(), // Genera un ID único para la tarea
+                                positivePrompt: q.imagePrompt,
+                                model: "bfl-flux-2-klein-4b",
+                                width: 1024,
+                                height: 1024
+                            }])
+                        });
+                        
+                        const rwData = await runwareResponse.json();
+                        
+                        if (rwData && rwData.data && rwData.data[0] && rwData.data[0].imageURL) {
+                            q.imageUrl = rwData.data[0].imageURL; // Inyecta la URL de FLUX en la pregunta
+                        }
+                    } catch (err) {
+                        console.error(`Error generando imagen para pregunta ${q.id}:`, err);
+                    }
+                }
+                return q;
+            }));
+        }
+
+        // 6. Retornar al frontend con las URLs incluidas
         return res.status(200).json({
             success: true,
-            questions: parsedData.questions
+            questions: finalQuestions
         });
 
     } catch (error) {
-        console.error('Error generando preguntas con Gemini:', error);
+        console.error('Error generando preguntas con Gemini/Runware:', error);
         return res.status(500).json({ 
             success: false, 
             message: 'Error en el motor de IA al generar el cuestionario.',
@@ -90,7 +128,6 @@ export default async function handler(req, res) {
     }
 }
 
-// CORRECCIÓN CRÍTICA: Aumentar el límite de tamaño del body para que Next.js no corte la petición
 export const config = {
     api: {
         bodyParser: {
