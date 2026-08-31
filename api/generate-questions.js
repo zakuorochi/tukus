@@ -56,15 +56,31 @@ export default async function handler(req, res) {
         }
         `;
 
-        console.log("Enviando petición a Gemini...");
+       console.log("Enviando petición a Gemini...");
         const result = await model.generateContent([promptText, ...imageParts]);
+        const rawText = result.response.text();
         
-        let rawText = result.response.text();
-        rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) rawText = jsonMatch[0];
+        let parsedData;
+        try {
+            // Como responseMimeType es application/json, parseamos directamente
+            parsedData = JSON.parse(rawText);
+        } catch (parseError) {
+            console.error("Error al leer el JSON de Gemini. Texto crudo recibido:", rawText);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'La IA no devolvió un formato válido.',
+                error: parseError.message 
+            });
+        }
 
-        const parsedData = JSON.parse(rawText);
+        // Validación de seguridad: Si Gemini devolvió directamente un Array en lugar del objeto raíz
+        if (Array.isArray(parsedData)) {
+            parsedData = { questions: parsedData, masterImagePrompt: null };
+        } else if (!parsedData.questions) {
+            // Si devolvió un objeto pero puso las preguntas bajo otra llave
+            parsedData.questions = [];
+        }
+
         let finalQuestions = parsedData.questions;
         let masterImageUrl = null;
 
