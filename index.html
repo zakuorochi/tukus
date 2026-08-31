@@ -476,22 +476,18 @@
         }
 
         // --- LÓGICA DE CÁMARA ---
-        async function startCamera() {
-            try {
-                // Request back camera with high resolution
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'environment',
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 } 
-                    } 
-                });
-                video.srcObject = stream;
-            } catch (err) {
-                console.warn("Cámara no disponible.", err);
-            }
-        }
-
+      async function startCamera() {
+    try {
+        // Solicitud genérica y rápida sin forzar resoluciones pesadas ni filtros bloqueantes
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' } 
+        });
+        video.srcObject = stream;
+    } catch (err) {
+        console.warn("Cámara no disponible o bloqueada.", err);
+        alert("No se pudo iniciar la cámara automáticamente. Por favor, usa la opción de subir archivos.");
+    }
+}
         function stopCamera() {
             if (stream) stream.getTracks().forEach(track => track.stop());
         }
