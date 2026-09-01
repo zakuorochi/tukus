@@ -30,7 +30,6 @@ export default async function handler(req, res) {
 
         const requestsImages = questionTypes.some(type => type.includes('Gráficos'));
 
-        // Modificación del Prompt: Un solo prompt maestro para 4 paneles
         const promptText = `
         Eres un pedagogo experto. Analiza las fotos de los apuntes adjuntos.
         Genera 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria.
@@ -56,65 +55,28 @@ export default async function handler(req, res) {
         }
         `;
 
-       console.log("Enviando petición a Gemini...");
+        console.log("Enviando petición a Gemini...");
         const result = await model.generateContent([promptText, ...imageParts]);
         const rawText = result.response.text();
         
         let parsedData;
         try {
-            // Como responseMimeType es application/json, parseamos directamente
             parsedData = JSON.parse(rawText);
         } catch (parseError) {
             console.error("Error al leer el JSON de Gemini. Texto crudo recibido:", rawText);
-            return res.status(500).json({ 
-                success: false, 
-                message: 'La IA no devolvió un formato válido.',
-                error: parseError.message 
-            });
+            return res.status(500).json({ success: false, message: 'La IA no devolvió un formato válido.', error: parseError.message });
         }
 
-        // Validación de seguridad: Si Gemini devolvió directamente un Array en lugar del objeto raíz
         if (Array.isArray(parsedData)) {
             parsedData = { questions: parsedData, masterImagePrompt: null };
         } else if (!parsedData.questions) {
-            // Si devolvió un objeto pero puso las preguntas bajo otra llave
             parsedData.questions = [];
-        }
-
-        let finalQuestions = parsedData.questions;
-        let masterImageUrl = null;
-
-        // Llamada ÚNICA a Runware
-        if (requestsImages && parsedData.masterImagePrompt && process.env.RUNWARE_API_KEY) {
-            console.log("Procesando CUADRÍCULA MAESTRA con Runware FLUX...");
-            try {
-                const runwareResponse = await fetch('https://api.runware.ai/v1', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.RUNWARE_API_KEY}` },
-                    body: JSON.stringify([{
-                        taskType: "imageInference",
-                        taskUUID: crypto.randomUUID(),
-                        positivePrompt: parsedData.masterImagePrompt,
-                        model: "bfl-flux-2-klein-4b",
-                        width: 1024, // Alta resolución para acomodar las 4 imágenes
-                        height: 1024,
-                        CFGScale: 3, 
-                        steps: 25
-                    }])
-                });
-                const rwData = await runwareResponse.json();
-                if (rwData && rwData.data && rwData.data[0] && rwData.data[0].imageURL) {
-                    masterImageUrl = rwData.data[0].imageURL;
-                }
-            } catch (err) {
-                console.error(`Error de Runware en Cuadrícula Maestra:`, err);
-            }
         }
 
         return res.status(200).json({ 
             success: true, 
-            questions: finalQuestions,
-            masterImageUrl: masterImageUrl
+            questions: parsedData.questions,
+            masterImagePrompt: parsedData.masterImagePrompt || null
         });
 
     } catch (error) {
