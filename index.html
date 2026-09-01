@@ -548,73 +548,83 @@
             document.getElementById('btnPhotos').disabled = photos.length === 0;
         }
 
-    async function handleGenerateQuestions() {
+  async function handleGenerateQuestions() {
             goToScreen(5);
             const box = document.getElementById('resultsBox');
             box.innerHTML = '';
             showLoading(true);
             
             try {
+                // 1. Pedir solo las preguntas
                 const response = await fetch('/api/generate-questions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        images: photos,
-                        grade: currentGrade,
-                        questionTypes: selectedTypes 
-                    })
+                    body: JSON.stringify({ images: photos, grade: currentGrade, questionTypes: selectedTypes })
                 });
                 
                 const data = await response.json();
+                showLoading(false); // Liberamos la pantalla rápido
                 
                 if (response.ok && data.success && data.questions) {
                     generatedQuestionsData = data.questions; 
-                    globalMasterImageUrl = data.masterImageUrl || null;
                     renderQuestions(data.questions);
+
+                    // 2. Si hay un prompt de imagen, la pedimos en segundo plano
+                    if (data.masterImagePrompt) {
+                        requestBackgroundImage(data.masterImagePrompt);
+                    }
                 } else {
                     box.innerHTML = `<h3 style="color:red;">Ups! Algo salió mal:</h3><p>${data.message}</p>`;
                 }
             } catch(err) {
                 console.error(err);
                 box.innerHTML = '<h3 style="color:red;">No hay internet 📶</h3><p>Revisa tu conexión y vuelve a intentar.</p>';
-            } finally {
                 showLoading(false);
-            }
+            } 
         }
 
-        function renderQuestions(questions) {
+        async function requestBackgroundImage(prompt) {
             const box = document.getElementById('resultsBox');
-            box.innerHTML = '';
             
-            // Si existe la imagen maestra (Cuadrícula 2x2), la inyectamos al inicio del examen
-            if (globalMasterImageUrl) {
-                box.innerHTML += `
-                    <div class="question-item" style="text-align: center; border-color: var(--accent-yellow); background: #fffde7;">
-                        <h3 style="color: #f57f17; margin-bottom: 10px;">🎨 Cuadrícula Gráfica de Referencia</h3>
-                        <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Usa estas 4 imágenes para responder las preguntas del examen.</p>
-                        <img src="${globalMasterImageUrl}" class="flux-image" style="max-width: 100%; margin: 0 auto; border-radius: 12px; border: 3px solid #e0e0e0;" alt="Cuadrícula IA">
-                        <br>
-                        <a href="${globalMasterImageUrl}" target="_blank" style="display:inline-block; margin-top:10px; color:var(--accent-blue); font-weight:bold; text-decoration:none;">🔍 Abrir imagen en grande</a>
-                    </div>
-                `;
-            }
+            // Insertamos un contenedor de carga visual al inicio de los resultados
+            const imageContainer = document.createElement('div');
+            imageContainer.id = "asyncImageContainer";
+            imageContainer.innerHTML = `
+                <div style="text-align: center; padding: 20px; border: 3px dashed #e0e0e0; border-radius: 12px; margin-bottom: 20px;">
+                    <div class="spinner" style="margin: 0 auto 10px auto; width: 40px; height: 40px; border-width: 4px;"></div>
+                    <p style="color: var(--accent-blue); font-weight: bold;">Dibujando la cuadrícula mágica...</p>
+                    <small>Ya puedes ir descargando el examen mientras esto termina.</small>
+                </div>
+            `;
+            box.insertBefore(imageContainer, box.firstChild);
 
-            questions.forEach(q => {
-                let optionsHtml = '';
-                if (q.options && q.options.length > 0) {
-                    optionsHtml = `<ul style="margin-left:20px; font-size:1.1rem; color:var(--text-muted); list-style-type: none; padding-top: 5px;">
-                        ${q.options.map((opt, i) => `<li style="margin-bottom: 5px;"><strong>${['A','B','C','D'][i]})</strong> ${opt}</li>`).join('')}
-                    </ul>`;
-                }
+            try {
+                const imgResponse = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imagePrompt: prompt })
+                });
                 
-                box.innerHTML += `
-                    <div class="question-item">
-                        <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span style="font-size: 1.1rem;">${q.statement}</span>
-                        <br><small style="color:var(--accent-blue); font-weight:bold;">[${q.type}]</small>
-                        ${optionsHtml}
-                    </div>
-                `;
-            });
+                const imgData = await imgResponse.json();
+                
+                if (imgResponse.ok && imgData.success && imgData.imageUrl) {
+                    globalMasterImageUrl = imgData.imageUrl;
+                    // Reemplazamos el loader con la imagen real
+                    imageContainer.innerHTML = `
+                        <div class="question-item" style="text-align: center; border-color: var(--accent-yellow); background: #fffde7;">
+                            <h3 style="color: #f57f17; margin-bottom: 10px;">🎨 Cuadrícula Gráfica de Referencia</h3>
+                            <img src="${imgData.imageUrl}" class="flux-image" style="max-width: 100%; margin: 0 auto; border-radius: 12px; border: 3px solid #e0e0e0;" alt="Cuadrícula IA">
+                            <br>
+                            <a href="${imgData.imageUrl}" target="_blank" style="display:inline-block; margin-top:10px; color:var(--accent-blue); font-weight:bold; text-decoration:none;">🔍 Abrir imagen en grande</a>
+                        </div>
+                    `;
+                } else {
+                    imageContainer.innerHTML = `<p style="color: red; text-align: center;">No se pudo generar el dibujo mágico.</p>`;
+                }
+            } catch(err) {
+                console.error("Error al obtener imagen asíncrona:", err);
+                imageContainer.innerHTML = `<p style="color: red; text-align: center;">Error de conexión al cargar la imagen.</p>`;
+            }
         }
 
         function exportQuestionsPDF() {
