@@ -14,33 +14,46 @@ export default async function handler(req, res) {
         }
 
         console.log("Procesando imagen con Runware FLUX...");
+        
+        // Payload construido estrictamente según el OpenAPI Schema
+        const payload = [{
+            taskType: "imageInference",
+            taskUUID: crypto.randomUUID(),
+            positivePrompt: imagePrompt,
+            model: "runware:400@4", // CORREGIDO: Identificador interno exacto de Runware
+            width: 1024,
+            height: 1024,
+            outputType: "URL", // CORREGIDO: Debe ser String, no Array
+            numberResults: 1
+        }];
+
         const runwareResponse = await fetch('https://api.runware.ai/v1', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json', 
                 'Authorization': `Bearer ${process.env.RUNWARE_API_KEY}` 
             },
-            body: JSON.stringify([{
-                taskType: "imageInference",
-                taskUUID: crypto.randomUUID(),
-                positivePrompt: imagePrompt,
-                model: "bfl-flux-2-klein-4b",
-                width: 1024,
-                height: 1024,
-                outputType: ["URL"],
-                numberResults: 1
-            }])
+            body: JSON.stringify(payload)
         });
 
         const rwData = await runwareResponse.json();
+        
+        console.log("Respuesta de Runware:", JSON.stringify(rwData));
 
+        // Manejo de la estructura de error oficial del Schema
+        if (rwData.errors && rwData.errors.length > 0) {
+            console.error("Runware devolvió un error de validación:", rwData.errors);
+            return res.status(500).json({ success: false, message: rwData.errors[0].message, details: rwData.errors });
+        }
+
+        // Manejo de la respuesta exitosa
         if (rwData && rwData.data && rwData.data[0] && rwData.data[0].imageURL) {
             return res.status(200).json({ 
                 success: true, 
                 imageUrl: rwData.data[0].imageURL 
             });
         } else {
-            throw new Error("Runware no devolvió una URL válida.");
+            throw new Error("La API no devolvió una imagen válida.");
         }
 
     } catch (error) {
