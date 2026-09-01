@@ -30,15 +30,20 @@ export default async function handler(req, res) {
 
         const requestsImages = questionTypes.some(type => type.includes('Gráficos'));
 
-        const promptText = `
+      const promptText = `
         Eres un pedagogo experto. Analiza las fotos de los apuntes adjuntos.
         Genera 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria.
         Tipos de pregunta requeridos: ${questionTypes.join(', ')}.
         
         ${requestsImages ? `ATENCIÓN: El usuario pidió ejercicios gráficos. NO pidas imágenes individuales. 
         En su lugar, crea UN SOLO "masterImagePrompt" EN INGLÉS que describa una cuadrícula de 4 secciones (2x2 grid educational image). 
-        Ejemplo: "A 2x2 grid educational illustration. Section 1: Parts of a flower. Section 2: A plant cell. Section 3: Plantae kingdom chart. Section 4: Fungi kingdom chart."
-        Además, asegúrate de que al menos 4 de tus preguntas hagan referencia a esta imagen (Ejemplo: "Observa la sección 1 de la cuadrícula. ¿Cuál es...?").` : ''}
+        
+        REGLA ESTRICTA PARA TEXTOS DENTRO DE LA IMAGEN:
+        El generador de imágenes alucina letras si no se le dan instrucciones literales. Si necesitas que aparezca texto escrito DENTRO de los paneles (títulos, etiquetas), DEBES indicarlo usando la frase "with the exact text" y poner la palabra en español entre comillas simples tipográficas.
+        Ejemplo correcto: "Section 1: A red mushroom, with the exact text 'Hongos Venenosos' written clearly below it. Section 2: A sliced bread, with the exact text 'Levaduras'."
+        Trata de mantener los textos dentro de la imagen muy cortos (1 o 2 palabras máximo).
+        
+        Además, asegúrate de que al menos 4 de tus preguntas en el JSON hagan referencia a esta imagen (Ejemplo: "Observa la sección 1 de la cuadrícula. ¿Cuál es...?").` : ''}
 
         Devuelve un objeto JSON con esta estructura exacta sin caracteres Markdown:
         {
@@ -54,7 +59,6 @@ export default async function handler(req, res) {
           ]
         }
         `;
-
         console.log("Enviando petición a Gemini...");
         const result = await model.generateContent([promptText, ...imageParts]);
         const rawText = result.response.text();
