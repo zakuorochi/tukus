@@ -567,6 +567,8 @@
                 
                 if (response.ok && data.success && data.questions) {
                     generatedQuestionsData = data.questions; 
+                    
+                    // Asegurarnos de llamar a la función de renderizado
                     renderQuestions(data.questions);
 
                     // 2. Si hay un prompt de imagen, la pedimos en segundo plano
@@ -581,6 +583,28 @@
                 box.innerHTML = '<h3 style="color:red;">No hay internet 📶</h3><p>Revisa tu conexión y vuelve a intentar.</p>';
                 showLoading(false);
             } 
+        }
+
+        // AGREGADA: Función para renderizar las preguntas en la interfaz
+        function renderQuestions(questions) {
+            const box = document.getElementById('resultsBox');
+            
+            questions.forEach(q => {
+                let optionsHtml = '';
+                if (q.options && q.options.length > 0) {
+                    optionsHtml = `<ul style="margin-left:20px; font-size:1.1rem; color:var(--text-muted); list-style-type: none; padding-top: 5px;">
+                        ${q.options.map((opt, i) => `<li style="margin-bottom: 5px;"><strong>${['A','B','C','D'][i]})</strong> ${opt}</li>`).join('')}
+                    </ul>`;
+                }
+                
+                box.innerHTML += `
+                    <div class="question-item">
+                        <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span style="font-size: 1.1rem;">${q.statement}</span>
+                        <br><small style="color:var(--accent-blue); font-weight:bold;">[${q.type}]</small>
+                        ${optionsHtml}
+                    </div>
+                `;
+            });
         }
 
         async function requestBackgroundImage(prompt) {
