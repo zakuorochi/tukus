@@ -31,27 +31,15 @@ export default async function handler(req, res) {
         const requestsImages = questionTypes.some(type => type.includes('Gráficos'));
 const promptText = `
         Eres un pedagogo experto. Analiza las fotos de los apuntes adjuntos.
-        Genera un total de 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria basándote en la materia identificada.
+        Genera 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria basándote en los apuntes.
         Tipos de pregunta requeridos: ${questionTypes.join(', ')}.
         
-        ${requestsImages ? `ATENCIÓN: El usuario pidió ejercicios gráficos.
-        Debes organizar el examen de la siguiente manera:
-        - Las primeras 5 preguntas (IDs 1 al 5) SERÁN VISUALES y deberán ser resueltas observando una hoja de trabajo generada.
-        - Las 15 preguntas restantes (IDs 6 al 20) serán de texto tradicional.
-        
-        REGLAS PARA EL "masterImagePrompt" (LA HOJA A4):
-        1. El prompt DEBE estar en INGLÉS, pidiendo un "A4 educational worksheet design, clean white background".
-        2. Debe describir 5 ejercicios gráficos numerados (por ejemplo, triángulos, gráficos, sumas).
-        3. PARA QUE EL TEXTO SALGA EN ESPAÑOL: Debes describir el texto usando la frase "with the exact text" y poner el texto en español entre comillas simples. Al estar apagado el 'enhancePrompt', la IA escribirá exactamente lo que esté entre comillas.
-        Ejemplo: "An A4 educational worksheet. Exercise 1 shows a triangle with a 45 degree angle and the exact text '1. Halla el valor de X'. Exercise 2 shows a circle with the exact text '2. Ángulo central'."
-
-        REGLA PARA EL JSON DE PREGUNTAS:
-        - Para los IDs del 1 al 5, el 'statement' debe decir algo como: "Resuelve el ejercicio [ID] de la hoja de trabajo adjunta."
-        - Para los IDs del 6 al 20, formula preguntas de texto normales basadas en los apuntes.` : ''}
+        ${requestsImages ? `ATENCIÓN: El usuario pidió una lámina gráfica de apoyo.
+        Crea un "masterImagePrompt" CORTO Y EN INGLÉS que describa una hoja de trabajo A4 limpia, estilo educativo minimalista, con figuras geométricas y espacios numerados del 1 al 5 para resolver, usando exclusivamente títulos limpios en español como "GEOMETRÍA: HALLA X". Evita meter párrafos de texto largos o fórmulas complejas en la imagen para que el motor no genere caracteres extraños.` : ''}
 
         Devuelve un objeto JSON con esta estructura exacta sin caracteres Markdown:
         {
-          "masterImagePrompt": "El prompt de la hoja A4 aquí en INGLÉS (solo si pidieron gráficos, sino vacío)",
+          "masterImagePrompt": "Descripción visual simple en inglés (ej: A clean educational A4 worksheet layout with geometric figures and numbered exercise boxes 1 to 5, minimalist style)",
           "questions": [
             {
               "id": 1,
