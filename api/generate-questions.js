@@ -29,39 +29,7 @@ export default async function handler(req, res) {
         }));
 
         const requestsImages = questionTypes.some(type => type.includes('Gráficos'));
-const promptText = `
-        Eres un pedagogo experto. Analiza las fotos de los apuntes adjuntos.
-        Identifica el tema principal (ej: Ciencias, Matemáticas, Geometría).
-        Genera 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria basándote en ellos.
-        Tipos de pregunta requeridos: ${questionTypes.join(', ')}.
 
-        ${requestsImages ? `ATENCIÓN: El usuario pidió ejercicios gráficos (Ejercicios Gráficos (IA)).
-        Como el tema puede requerir precisión matemática (geometría, fracciones, planos), NO pidas imágenes fotográficas.
-        En su lugar, para al menos 5 de estas preguntas, DEBES generar un gráfico vectorial usando código SVG nativo.
-        
-        REGLA CRÍTICA PARA EL SVG (ANTIFALLOS JSON):
-        1. DEBES usar EXCLUSIVAMENTE COMILLAS SIMPLES (') para todos los atributos del SVG. 
-        ESTÁ ESTRICTAMENTE PROHIBIDO usar comillas dobles (") dentro del código SVG. 
-        Ejemplo CORRECTO: <svg viewBox='0 0 200 200'><circle cx='100' cy='100' fill='yellow'/></svg>
-        Ejemplo INCORRECTO: <svg viewBox="0 0 200 200">
-        2. Todo el código SVG debe ir en una sola línea sin saltos de línea (\\n).
-        ` : ''}
-
-        Devuelve un objeto JSON con esta estructura exacta sin caracteres Markdown:
-        {
-          "masterImagePrompt": "", 
-          "questions": [
-            {
-              "id": 1,
-              "type": "Opción Múltiple", 
-              "statement": "El texto de la pregunta...",
-              "svgCode": "<svg viewBox='0 0 200 200'><text x='50' y='50'>X</text></svg>", 
-              "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
-              "answer": "La respuesta correcta"
-            }
-          ]
-        }
-        `;
         console.log("Enviando petición a Gemini...");
         const result = await model.generateContent([promptText, ...imageParts]);
         const rawText = result.response.text();
