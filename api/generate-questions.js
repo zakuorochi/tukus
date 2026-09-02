@@ -29,30 +29,35 @@ export default async function handler(req, res) {
         }));
 
         const requestsImages = questionTypes.some(type => type.includes('Gráficos'));
-
-      const promptText = `
+const promptText = `
         Eres un pedagogo experto. Analiza las fotos de los apuntes adjuntos.
-        Genera 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria.
+        Primero, identifica el tema principal (por ejemplo: Ciencias, Letras, MATEMÁTICAS).
+        Genera 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria basándote en los apuntes.
         Tipos de pregunta requeridos: ${questionTypes.join(', ')}.
         
         ${requestsImages ? `ATENCIÓN: El usuario pidió ejercicios gráficos. NO pidas imágenes individuales. 
-        En su lugar, crea UN SOLO "masterImagePrompt" EN INGLÉS que describa una cuadrícula de 4 secciones (2x2 grid educational image). 
+        Crea UN SOLO "masterImagePrompt" EN INGLÉS que describa una cuadrícula de 4 secciones (2x2 grid educational image). 
         
+        REGLA ESPECIAL PARA MATEMÁTICAS:
+        Si detectas que el tema involucra operaciones matemáticas, fracciones, geometría o problemas numéricos, DEBES usar la imagen para plantear el ejercicio visualmente (ej. figuras con medidas, tortas de fracciones, balanzas, o los números dibujados grandes). 
+        Evita poner fórmulas o notación compleja en el texto JSON. En su lugar, apóyate en la imagen.
+        Ejemplo de pregunta: "Observa el rectángulo de la Sección 1. ¿Cuál es su perímetro?"
+        Ejemplo de masterImagePrompt matemático: "Section 1: A diagram of a green rectangle with the exact text 'Base: 8cm' and 'Height: 4cm'. Section 2: A pie chart showing 3/4 filled, with the exact text 'Fracción'."
+
         REGLA ESTRICTA PARA TEXTOS DENTRO DE LA IMAGEN:
-        El generador de imágenes alucina letras si no se le dan instrucciones literales. Si necesitas que aparezca texto escrito DENTRO de los paneles (títulos, etiquetas), DEBES indicarlo usando la frase "with the exact text" y poner la palabra en español entre comillas simples tipográficas.
-        Ejemplo correcto: "Section 1: A red mushroom, with the exact text 'Hongos Venenosos' written clearly below it. Section 2: A sliced bread, with the exact text 'Levaduras'."
-        Trata de mantener los textos dentro de la imagen muy cortos (1 o 2 palabras máximo).
+        Como usaremos el motor Ideogram, tiene una capacidad tipográfica perfecta. Si necesitas que aparezca un texto, número o fórmula DENTRO de los paneles, DEBES indicarlo usando la frase "with the exact text" y ponerlo entre comillas simples.
+        Ejemplo: "Section 1: A chalkboard with the exact text '25 x 4 =' written on it."
         
-        Además, asegúrate de que al menos 4 de tus preguntas en el JSON hagan referencia a esta imagen (Ejemplo: "Observa la sección 1 de la cuadrícula. ¿Cuál es...?").` : ''}
+        Asegúrate de que al menos 4 de tus preguntas en el JSON hagan referencia a las secciones de esta imagen (Ejemplo: "Observa la sección 2 de la imagen. ¿Qué representa...?").` : ''}
 
         Devuelve un objeto JSON con esta estructura exacta sin caracteres Markdown:
         {
-          "masterImagePrompt": "El prompt de la cuadrícula aquí (solo si pidieron gráficos, sino vacío)",
+          "masterImagePrompt": "El prompt de la cuadrícula aquí en INGLÉS (solo si pidieron gráficos, sino vacío)",
           "questions": [
             {
               "id": 1,
               "type": "Opción Múltiple", 
-              "statement": "El texto de la pregunta...",
+              "statement": "El texto de la pregunta (refiriéndose a la sección de la imagen si es necesario)...",
               "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
               "answer": "La respuesta correcta"
             }
