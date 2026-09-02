@@ -663,8 +663,10 @@
             }
         }
 
-        function exportQuestionsPDF() {
+     async function exportQuestionsPDF() {
             if(!generatedQuestionsData) return;
+            showLoading(true); // Mostrar carga mientras se dibujan los vectores
+            
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
@@ -681,9 +683,34 @@
             
             doc.setTextColor(30, 41, 59);
             let y = 55;
+
+            // Motor de conversión SVG a PNG para el PDF
+            const svgToPng = (svgStr) => {
+                return new Promise((resolve) => {
+                    if(!svgStr.includes("xmlns")) {
+                        svgStr = svgStr.replace("<svg ", "<svg xmlns='http://www.w3.org/2000/svg' ");
+                    }
+                    const encoded = encodeURIComponent(svgStr);
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 600; // Alta resolución
+                        canvas.height = 300; 
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = "#ffffff"; // Fondo blanco para evitar transparencias oscuras
+                        ctx.fillRect(0, 0, 600, 300);
+                        ctx.drawImage(img, 0, 0, 600, 300);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.onerror = () => resolve(null);
+                    img.src = "data:image/svg+xml;charset=utf-8," + encoded;
+                });
+            };
             
-            generatedQuestionsData.forEach((q, index) => {
-                if(y > 270) {
+            for (let index = 0; index < generatedQuestionsData.length; index++) {
+                const q = generatedQuestionsData[index];
+                
+                if(y > 250) {
                     doc.addPage();
                     y = 20;
                 }
@@ -695,14 +722,13 @@
                 doc.setFont(undefined, 'normal');
                 y += (splitTitle.length * 7) + 2;
                 
-                if(q.requiresImage || q.imageUrl) {
-                    doc.setDrawColor(200, 200, 200);
-                    doc.setFillColor(245, 245, 245);
-                    doc.rect(50, y, 110, 60, 'FD');
-                    doc.setTextColor(150, 150, 150);
-                    doc.text("[Espacio reservado para ilustración IA]", 105, y + 30, null, null, "center");
-                    doc.setTextColor(30, 41, 59);
-                    y += 65;
+                // Incrustar la imagen si existe código SVG
+                if (q.svgCode && q.svgCode !== "null" && q.svgCode.trim() !== "") {
+                    const pngData = await svgToPng(q.svgCode);
+                    if(pngData) {
+                        doc.addImage(pngData, 'PNG', 50, y, 100, 50); // 100x50mm mantiene la proporción 2:1
+                        y += 55;
+                    }
                 }
                 
                 if (q.type === 'Opción Múltiple' && q.options) {
@@ -722,9 +748,10 @@
                     doc.line(20, y, 190, y);
                     y += 15;
                 }
-            });
+            }
             
             doc.save("TUKU_Examen_Alumno.pdf");
+            showLoading(false);
         }
 
         function exportAnswersPDF() {
