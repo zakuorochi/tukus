@@ -586,7 +586,7 @@
         }
 
         // AGREGADA: Función para renderizar las preguntas en la interfaz
-        function renderQuestions(questions) {
+       function renderQuestions(questions) {
             const box = document.getElementById('resultsBox');
             
             questions.forEach(q => {
@@ -597,10 +597,22 @@
                     </ul>`;
                 }
                 
+                // --- NUEVO: Renderizado del código vectorial SVG ---
+                let svgHtml = '';
+                if (q.svgCode && q.svgCode !== "null" && q.svgCode.trim() !== "") {
+                    svgHtml = `
+                    <div style="text-align: center; margin: 15px 0; padding: 15px; background: #ffffff; border-radius: 12px; border: 3px dashed var(--accent-blue);">
+                        <div style="max-width: 250px; margin: 0 auto; display: block;">
+                            ${q.svgCode}
+                        </div>
+                    </div>`;
+                }
+                
                 box.innerHTML += `
                     <div class="question-item">
                         <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span style="font-size: 1.1rem;">${q.statement}</span>
                         <br><small style="color:var(--accent-blue); font-weight:bold;">[${q.type}]</small>
+                        ${svgHtml}
                         ${optionsHtml}
                     </div>
                 `;
