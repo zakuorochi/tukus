@@ -13,18 +13,23 @@ export default async function handler(req, res) {
             return res.status(400).json({ success: false, message: 'Falta el prompt de la imagen' });
         }
 
-        console.log("Procesando imagen con Runware FLUX...");
+        console.log("Procesando imagen con Pruna AI (Ideogram)...");
         
-        // Payload construido estrictamente según el OpenAPI Schema
+        // Payload construido estrictamente según el esquema de P-Image-Ideogram
         const payload = [{
             taskType: "imageInference",
             taskUUID: crypto.randomUUID(),
             positivePrompt: imagePrompt,
-            model: "runware:400@4", // CORREGIDO: Identificador interno exacto de Runware
+            model: "prunaai:p-image@ideogram", // ¡Nuevo motor activado!
             width: 1024,
             height: 1024,
-            outputType: "URL", // CORREGIDO: Debe ser String, no Array
-            numberResults: 1
+            outputType: "URL",
+            numberResults: 1,
+            // Agregamos las configuraciones exclusivas de este modelo para máxima calidad
+            settings: {
+                enhancePrompt: true, // Le damos permiso a la IA de mejorar nuestra instrucción
+                thinkingLevel: "high" // Forzamos el máximo razonamiento para que la tipografía salga perfecta
+            }
         }];
 
         const runwareResponse = await fetch('https://api.runware.ai/v1', {
@@ -38,9 +43,9 @@ export default async function handler(req, res) {
 
         const rwData = await runwareResponse.json();
         
-        console.log("Respuesta de Runware:", JSON.stringify(rwData));
+        console.log("Respuesta de Runware (Ideogram):", JSON.stringify(rwData));
 
-        // Manejo de la estructura de error oficial del Schema
+        // Manejo de la estructura de error oficial
         if (rwData.errors && rwData.errors.length > 0) {
             console.error("Runware devolvió un error de validación:", rwData.errors);
             return res.status(500).json({ success: false, message: rwData.errors[0].message, details: rwData.errors });
@@ -57,7 +62,7 @@ export default async function handler(req, res) {
         }
 
     } catch (error) {
-        console.error('Error generando imagen:', error);
+        console.error('Error generando imagen con Ideogram:', error);
         return res.status(500).json({ success: false, message: 'Error al generar ilustración.', error: error.message });
     }
 }
