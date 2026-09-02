@@ -61,16 +61,32 @@ export default async function handler(req, res) {
         }
         `;
 
-        console.log("Enviando petición a Gemini...");
+console.log("Enviando petición a Gemini...");
         const result = await model.generateContent([promptText, ...imageParts]);
         const rawText = result.response.text();
         
         let parsedData;
         try {
-            parsedData = JSON.parse(rawText);
+            // Limpieza robusta: Extrae estrictamente lo que esté entre la primera llave y la última
+            let jsonString = rawText.trim();
+            const firstBrace = jsonString.indexOf('{');
+            const lastBrace = jsonString.lastIndexOf('}');
+            
+            if (firstBrace !== -1 && lastBrace !== -1) {
+                jsonString = jsonString.substring(firstBrace, lastBrace + 1);
+            }
+            
+            // Reemplazos de seguridad para evitar saltos de línea ilegales en los SVG
+            jsonString = jsonString.replace(/[\r\n]+/g, " ");
+
+            parsedData = JSON.parse(jsonString);
         } catch (parseError) {
             console.error("Error al leer el JSON de Gemini. Texto crudo recibido:", rawText);
-            return res.status(500).json({ success: false, message: 'La IA no devolvió un formato válido.', error: parseError.message });
+            return res.status(500).json({ 
+                success: false, 
+                message: 'La IA no devolvió un formato válido.',
+                error: parseError.message 
+            });
         }
 
         if (Array.isArray(parsedData)) {
