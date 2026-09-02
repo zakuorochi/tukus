@@ -31,33 +31,32 @@ export default async function handler(req, res) {
         const requestsImages = questionTypes.some(type => type.includes('Gráficos'));
 const promptText = `
         Eres un pedagogo experto. Analiza las fotos de los apuntes adjuntos.
-        Primero, identifica el tema principal (por ejemplo: Ciencias, Letras, MATEMÁTICAS).
-        Genera 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria basándote en los apuntes.
+        Genera un total de 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria basándote en la materia identificada.
         Tipos de pregunta requeridos: ${questionTypes.join(', ')}.
         
-        ${requestsImages ? `ATENCIÓN: El usuario pidió ejercicios gráficos. NO pidas imágenes individuales. 
-        Crea UN SOLO "masterImagePrompt" EN INGLÉS que describa una cuadrícula de 4 secciones (2x2 grid educational image). 
+        ${requestsImages ? `ATENCIÓN: El usuario pidió ejercicios gráficos.
+        Debes organizar el examen de la siguiente manera:
+        - Las primeras 5 preguntas (IDs 1 al 5) SERÁN VISUALES y deberán ser resueltas observando una hoja de trabajo generada.
+        - Las 15 preguntas restantes (IDs 6 al 20) serán de texto tradicional.
         
-        REGLA ESPECIAL PARA MATEMÁTICAS:
-        Si detectas que el tema involucra operaciones matemáticas, fracciones, geometría o problemas numéricos, DEBES usar la imagen para plantear el ejercicio visualmente (ej. figuras con medidas, tortas de fracciones, balanzas, o los números dibujados grandes). 
-        Evita poner fórmulas o notación compleja en el texto JSON. En su lugar, apóyate en la imagen.
-        Ejemplo de pregunta: "Observa el rectángulo de la Sección 1. ¿Cuál es su perímetro?"
-        Ejemplo de masterImagePrompt matemático: "Section 1: A diagram of a green rectangle with the exact text 'Base: 8cm' and 'Height: 4cm'. Section 2: A pie chart showing 3/4 filled, with the exact text 'Fracción'."
+        REGLAS PARA EL "masterImagePrompt" (LA HOJA A4):
+        1. El prompt DEBE estar en INGLÉS, pidiendo un "A4 educational worksheet design, clean white background".
+        2. Debe describir 5 ejercicios gráficos numerados (por ejemplo, triángulos, gráficos, sumas).
+        3. PARA QUE EL TEXTO SALGA EN ESPAÑOL: Debes describir el texto usando la frase "with the exact text" y poner el texto en español entre comillas simples. Al estar apagado el 'enhancePrompt', la IA escribirá exactamente lo que esté entre comillas.
+        Ejemplo: "An A4 educational worksheet. Exercise 1 shows a triangle with a 45 degree angle and the exact text '1. Halla el valor de X'. Exercise 2 shows a circle with the exact text '2. Ángulo central'."
 
-        REGLA ESTRICTA PARA TEXTOS DENTRO DE LA IMAGEN:
-        Como usaremos el motor Ideogram, tiene una capacidad tipográfica perfecta. Si necesitas que aparezca un texto, número o fórmula DENTRO de los paneles, DEBES indicarlo usando la frase "with the exact text" y ponerlo entre comillas simples.
-        Ejemplo: "Section 1: A chalkboard with the exact text '25 x 4 =' written on it."
-        
-        Asegúrate de que al menos 4 de tus preguntas en el JSON hagan referencia a las secciones de esta imagen (Ejemplo: "Observa la sección 2 de la imagen. ¿Qué representa...?").` : ''}
+        REGLA PARA EL JSON DE PREGUNTAS:
+        - Para los IDs del 1 al 5, el 'statement' debe decir algo como: "Resuelve el ejercicio [ID] de la hoja de trabajo adjunta."
+        - Para los IDs del 6 al 20, formula preguntas de texto normales basadas en los apuntes.` : ''}
 
         Devuelve un objeto JSON con esta estructura exacta sin caracteres Markdown:
         {
-          "masterImagePrompt": "El prompt de la cuadrícula aquí en INGLÉS (solo si pidieron gráficos, sino vacío)",
+          "masterImagePrompt": "El prompt de la hoja A4 aquí en INGLÉS (solo si pidieron gráficos, sino vacío)",
           "questions": [
             {
               "id": 1,
               "type": "Opción Múltiple", 
-              "statement": "El texto de la pregunta (refiriéndose a la sección de la imagen si es necesario)...",
+              "statement": "El texto de la pregunta...",
               "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
               "answer": "La respuesta correcta"
             }
