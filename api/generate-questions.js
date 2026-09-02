@@ -29,21 +29,10 @@ export default async function handler(req, res) {
         }));
 
         const requestsImages = questionTypes.some(type => type.includes('Gráficos'));
-       const promptText = `
+      const promptText = `
         Eres un pedagogo experto. Analiza las fotos de los apuntes adjuntos.
         Identifica el tema principal y genera 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria.
         Tipos de pregunta requeridos: ${questionTypes.join(', ')}.
-
-        ${requestsImages ? `ATENCIÓN: El usuario pidió ejercicios gráficos.
-        Para al menos 5 preguntas, DEBES generar un gráfico vectorial en el campo "svgCode".
-        
-        REGLA CRÍTICA PARA EL SVG (LÓGICA Y ANTIFALLOS):
-        1. NUNCA uses comillas dobles ("). Usa EXCLUSIVAMENTE COMILLAS SIMPLES (') para los atributos.
-        2. Inicia SIEMPRE tu código con: <svg viewBox='0 0 300 150' xmlns='http://www.w3.org/2000/svg'>
-        3. DIBUJA EL PROBLEMA COMPLETO: Si la pregunta es sobre una secuencia (ej. Triángulo, Círculo, Triángulo), NO dibujes una sola figura. Dibuja las TRES figuras separadas horizontalmente (ej. la primera en cx='50', la segunda en cx='150', la tercera en cx='250').
-        4. Si es de fracciones, dibuja la figura completa y pinta las partes.
-        5. El código debe ir en UNA SOLA LÍNEA sin saltos de línea (\\n).
-        ` : ''}
 
         Devuelve un objeto JSON con esta estructura exacta sin caracteres Markdown:
         {
@@ -53,7 +42,6 @@ export default async function handler(req, res) {
               "id": 1,
               "type": "Opción Múltiple", 
               "statement": "El texto de la pregunta...",
-              "svgCode": "<svg viewBox='0 0 300 150' xmlns='http://www.w3.org/2000/svg'><polygon points='50,20 20,80 80,80' fill='black'/><polygon points='150,20 120,80 180,80' fill='black'/></svg>", 
               "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
               "answer": "La respuesta correcta"
             }
