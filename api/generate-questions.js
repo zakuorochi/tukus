@@ -29,19 +29,32 @@ export default async function handler(req, res) {
         }));
 
         const requestsImages = questionTypes.some(type => type.includes('Gráficos'));
-      const promptText = `
+    const promptText = `
         Eres un pedagogo experto. Analiza las fotos de los apuntes adjuntos.
-        Identifica el tema principal y genera 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria.
+        Primero, clasifica el tema principal en una de dos categorías: "CIENCIAS_MATEMATICAS" o "LETRAS_HUMANIDADES".
+        Genera 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria.
         Tipos de pregunta requeridos: ${questionTypes.join(', ')}.
+
+        ${requestsImages ? `ATENCIÓN: El usuario pidió apoyo gráfico.
+        NO generes un prompt maestro. En su lugar, evalúa pregunta por pregunta si requiere un apoyo visual y escribe un prompt en INGLÉS en el campo "imagePrompt".
+
+        REGLAS DE DECISIÓN VISUAL:
+        1. Tema LETRAS_HUMANIDADES (historia, lenguaje, etc.): Usa "imagePrompt" SOLO si es estrictamente necesario (ej. identificar una bandera, un mapa, o las partes de una planta). Si el texto es suficiente, pon "imagePrompt": null.
+        2. Tema CIENCIAS_MATEMATICAS (operaciones complejas, geometría, secuencias lógicas): Es OBLIGATORIO usar "imagePrompt" para representar visualmente el problema matemático (ej. un triángulo con ángulos, gráficos circulares de fracciones).
+
+        REGLAS PARA EL PROMPT DE IMAGEN (IDEOGRAM):
+        - Escribe descripciones cortas y minimalistas (ej. "A clean educational graphic with white background showing a green square").
+        - Si necesitas números o letras exactas en el dibujo, usa "with the exact text" y comillas simples (ej. with the exact text 'X').` : ''}
 
         Devuelve un objeto JSON con esta estructura exacta sin caracteres Markdown:
         {
-          "masterImagePrompt": "", 
+          "subjectCategory": "CIENCIAS_MATEMATICAS",
           "questions": [
             {
               "id": 1,
               "type": "Opción Múltiple", 
               "statement": "El texto de la pregunta...",
+              "imagePrompt": "Prompt en inglés para la imagen o null si no se requiere",
               "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
               "answer": "La respuesta correcta"
             }
