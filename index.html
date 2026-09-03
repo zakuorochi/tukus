@@ -586,9 +586,11 @@
         }
 
         // AGREGADA: Función para renderizar las preguntas en la interfaz
-       function renderQuestions(questions) {
+     function renderQuestions(questions) {
             const box = document.getElementById('resultsBox');
-            
+            box.innerHTML = ''; 
+
+            // 1. Dibujar todo el texto y las opciones al instante
             questions.forEach(q => {
                 let optionsHtml = '';
                 if (q.options && q.options.length > 0) {
@@ -597,26 +599,60 @@
                     </ul>`;
                 }
                 
-                // --- NUEVO: Renderizado del código vectorial SVG ---
-                let svgHtml = '';
-                if (q.svgCode && q.svgCode !== "null" && q.svgCode.trim() !== "") {
-                    svgHtml = `
-                    <div style="text-align: center; margin: 15px 0; padding: 15px; background: #ffffff; border-radius: 12px; border: 3px dashed var(--accent-blue);">
-                        <div style="max-width: 250px; margin: 0 auto; display: block;">
-                            ${q.svgCode}
-                        </div>
+                // Contenedor temporal para la imagen si la pregunta lo requiere
+                let imageHtml = '';
+                if (q.imagePrompt && q.imagePrompt !== "null" && q.imagePrompt.trim() !== "") {
+                    imageHtml = `
+                    <div id="img-container-${q.id}" style="text-align: center; margin: 15px 0; padding: 15px; background: #f8fafc; border-radius: 12px; border: 2px dashed #cbd5e1;">
+                        <span style="color: #64748b; font-size: 0.9rem;">⏳ Dibujando ejercicio gráfico...</span>
                     </div>`;
                 }
                 
                 box.innerHTML += `
-                    <div class="question-item">
+                    <div class="question-item" style="margin-bottom: 25px;">
                         <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span style="font-size: 1.1rem;">${q.statement}</span>
                         <br><small style="color:var(--accent-blue); font-weight:bold;">[${q.type}]</small>
-                        ${svgHtml}
+                        ${imageHtml}
                         ${optionsHtml}
                     </div>
                 `;
             });
+
+            // 2. Disparar la generación de imágenes en segundo plano
+            questions.forEach(q => {
+                if (q.imagePrompt && q.imagePrompt !== "null" && q.imagePrompt.trim() !== "") {
+                    fetchImageForQuestion(q.id, q.imagePrompt);
+                }
+            });
+        }
+
+        async function fetchImageForQuestion(questionId, prompt) {
+            const container = document.getElementById(`img-container-${questionId}`);
+            if (!container) return;
+
+            try {
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imagePrompt: prompt })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.imageUrl) {
+                    // Reemplazar el mensaje de carga con la imagen final
+                    container.innerHTML = `<img src="${data.imageUrl}" alt="Gráfico de apoyo" style="max-width: 100%; height: auto; border-radius: 8px;">`;
+                    
+                    // Guardar la URL en los datos globales para cuando se exporte a PDF
+                    const questionRef = generatedQuestionsData.find(q => q.id === questionId);
+                    if (questionRef) questionRef.generatedImageUrl = data.imageUrl;
+                } else {
+                    container.innerHTML = `<span style="color: #ef4444; font-size: 0.9rem;">❌ Gráfico no disponible.</span>`;
+                }
+            } catch (error) {
+                console.error("Error obteniendo imagen:", error);
+                container.innerHTML = `<span style="color: #ef4444; font-size: 0.9rem;">❌ Error de conexión al dibujar.</span>`;
+            }
         }
 
         async function requestBackgroundImage(prompt) {
