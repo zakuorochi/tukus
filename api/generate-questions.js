@@ -29,22 +29,26 @@ export default async function handler(req, res) {
         }));
 
         const requestsImages = questionTypes.some(type => type.includes('Gráficos'));
-    const promptText = `
+  const promptText = `
         Eres un pedagogo experto. Analiza las fotos de los apuntes adjuntos.
-        Primero, clasifica el tema principal en una de dos categorías: "CIENCIAS_MATEMATICAS" o "LETRAS_HUMANIDADES".
+        Primero, clasifica el tema principal en: "CIENCIAS_MATEMATICAS" o "LETRAS_HUMANIDADES".
         Genera 20 preguntas evaluativas para un estudiante de ${grade}° grado de primaria.
         Tipos de pregunta requeridos: ${questionTypes.join(', ')}.
 
         ${requestsImages ? `ATENCIÓN: El usuario pidió apoyo gráfico.
-        NO generes un prompt maestro. En su lugar, evalúa pregunta por pregunta si requiere un apoyo visual y escribe un prompt en INGLÉS en el campo "imagePrompt".
+        NO generes un prompt maestro. Evalúa cada pregunta individualmente para decidir si requiere una imagen en el campo "imagePrompt".
 
-        REGLAS DE DECISIÓN VISUAL:
-        1. Tema LETRAS_HUMANIDADES (historia, lenguaje, etc.): Usa "imagePrompt" SOLO si es estrictamente necesario (ej. identificar una bandera, un mapa, o las partes de una planta). Si el texto es suficiente, pon "imagePrompt": null.
-        2. Tema CIENCIAS_MATEMATICAS (operaciones complejas, geometría, secuencias lógicas): Es OBLIGATORIO usar "imagePrompt" para representar visualmente el problema matemático (ej. un triángulo con ángulos, gráficos circulares de fracciones).
+        REGLAS CRÍTICAS DE CANTIDAD Y NECESIDAD (CONTROL DE COSTOS):
+        1. DEBES generar un mínimo de 1 y un MÁXIMO DE 5 "imagePrompt" en total para todo el examen.
+        2. Las otras 15 a 19 preguntas DEBEN llevar obligatoriamente "imagePrompt": null.
+        3. Solo asigna una imagen si es ESTRICTAMENTE NECESARIA para resolver el problema (ej. contar objetos, identificar un ángulo, diagramas visuales). Si se puede resolver solo leyendo el texto, usa null.
 
-        REGLAS PARA EL PROMPT DE IMAGEN (IDEOGRAM):
-        - Escribe descripciones cortas y minimalistas (ej. "A clean educational graphic with white background showing a green square").
-        - Si necesitas números o letras exactas en el dibujo, usa "with the exact text" y comillas simples (ej. with the exact text 'X').` : ''}
+        REGLAS DE ESTILO DEL PROMPT (IDEOGRAM - EVITAR ALUCINACIONES):
+        - El prompt debe estar en INGLÉS.
+        - Fuerza siempre este estilo al inicio del prompt: "Flat icon style, minimalist vector, clean white background, simple educational illustration".
+        - Evita fondos complejos, paisajes o elementos innecesarios.
+        - NO incluyas textos dentro de la imagen a menos que sea obligatorio para el ejercicio. Si es vital, usa "with the exact text" y comillas simples.
+        - Ejemplo ideal: "Flat icon style, minimalist vector, a green triangle with a 90 degree angle marked, clean white background".` : ''}
 
         Devuelve un objeto JSON con esta estructura exacta sin caracteres Markdown:
         {
@@ -54,7 +58,7 @@ export default async function handler(req, res) {
               "id": 1,
               "type": "Opción Múltiple", 
               "statement": "El texto de la pregunta...",
-              "imagePrompt": "Prompt en inglés para la imagen o null si no se requiere",
+              "imagePrompt": "Prompt en inglés con estilo icono o null",
               "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
               "answer": "La respuesta correcta"
             }
