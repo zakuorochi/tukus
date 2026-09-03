@@ -16,17 +16,17 @@ export default async function handler(req, res) {
         console.log("Procesando imagen con Pruna AI (Ideogram)...");
         
         // Payload construido estrictamente según el esquema de P-Image-Ideogram
-      const payload = [{
+   const payload = [{
             taskType: "imageInference",
             taskUUID: crypto.randomUUID(),
             positivePrompt: imagePrompt,
             model: "prunaai:p-image@ideogram", 
-            width: 896,  // Ancho A4
-            height: 1280, // Alto A4
+            width: 512,  // Mitad de resolución para ahorrar costos
+            height: 512, // Imágenes cuadradas para diagramas
             outputType: "URL",
             numberResults: 1,
             settings: {
-                enhancePrompt: false, // CRÍTICO: Apagar para que respete el español exacto
+                enhancePrompt: false, 
                 thinkingLevel: "high"
             }
         }];
