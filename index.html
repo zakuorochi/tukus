@@ -175,6 +175,21 @@
             color: var(--accent-green); 
             box-shadow: 0 4px 0px var(--accent-green);
         }
+        
+        .card-select.special {
+            border-color: var(--accent-yellow);
+            background: #fffde7;
+            color: #f57f17;
+            box-shadow: 0 4px 0px var(--accent-yellow);
+            grid-column: 1 / -1;
+            margin-top: 10px;
+        }
+        .card-select.special.selected {
+            background: var(--accent-yellow);
+            color: white;
+            border-color: #f57f17;
+            box-shadow: 0 4px 0px #f57f17;
+        }
 
         .camera-view {
             height: 60vh; 
@@ -335,6 +350,11 @@
                 <div class="card-select type-opt" onclick="toggleType('Completar Espacios', this)">Completar ___ ✍️</div>
                 <div class="card-select type-opt" onclick="toggleType('Preguntas y Respuestas', this)">Preguntas Breves 💬</div>
                 <div class="card-select type-opt" onclick="toggleType('Verdadero / Falso', this)">Verdad o Falso ⚖️</div>
+                
+                <div class="card-select type-opt special" onclick="toggleType('Ejercicios Gráficos (IA)', this)">
+                    🎨 ¡Añadir Ejercicios Gráficos! 📐<br>
+                    <small style="font-size: 0.9rem; font-weight: normal;">Solo si la materia (geometría, matemáticas) lo requiere.</small>
+                </div>
             </div>
             
             <div class="footer-nav">
@@ -565,18 +585,80 @@
                     </ul>`;
                 }
                 
+                // Contenedor visual opcional para peticiones de gráficos
+                let imageHtml = '';
+                if (q.imagePrompt && q.imagePrompt !== "null" && q.imagePrompt.trim() !== "") {
+                    imageHtml = `
+                    <div id="img-container-${q.id}" style="text-align: center; margin: 15px 0; padding: 15px; background: #f8fafc; border-radius: 12px; border: 2px dashed #cbd5e1;">
+                        <span style="color: #64748b; font-size: 0.9rem;">⏳ Creando gráfico del ejercicio...</span>
+                    </div>`;
+                }
+                
                 box.innerHTML += `
                     <div class="question-item" style="margin-bottom: 25px;">
                         <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span style="font-size: 1.1rem;">${q.statement}</span>
                         <br><small style="color:var(--accent-blue); font-weight:bold;">[${q.type}]</small>
+                        ${imageHtml}
                         ${optionsHtml}
                     </div>
                 `;
             });
+
+            // Procesar imágenes en segundo plano si la pregunta lo exige
+            questions.forEach(q => {
+                if (q.imagePrompt && q.imagePrompt !== "null" && q.imagePrompt.trim() !== "") {
+                    fetchImageForQuestion(q.id, q.imagePrompt);
+                }
+            });
         }
 
-        function exportQuestionsPDF() {
+        async function fetchImageForQuestion(questionId, prompt) {
+            const container = document.getElementById(`img-container-${questionId}`);
+            if (!container) return;
+
+            try {
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imagePrompt: prompt })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.imageUrl) {
+                    container.innerHTML = `<img src="${data.imageUrl}" alt="Gráfico de apoyo" style="max-width: 100%; height: auto; border-radius: 8px;">`;
+                    const questionRef = generatedQuestionsData.find(q => q.id === questionId);
+                    if (questionRef) questionRef.generatedImageUrl = data.imageUrl;
+                } else {
+                    container.innerHTML = `<span style="color: #ef4444; font-size: 0.9rem;">❌ Gráfico no disponible.</span>`;
+                }
+            } catch (error) {
+                console.error("Error obteniendo imagen:", error);
+                container.innerHTML = `<span style="color: #ef4444; font-size: 0.9rem;">❌ Error de conexión al dibujar.</span>`;
+            }
+        }
+
+        // Función auxiliar para convertir URLs externas a Base64 y usarlas en PDF
+        const getBase64ImageFromUrl = (url) => {
+            return new Promise((resolve, reject) => {
+                let img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    let canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    let ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/jpeg'));
+                };
+                img.onerror = reject;
+                img.src = url;
+            });
+        };
+
+        async function exportQuestionsPDF() {
             if(!generatedQuestionsData) return;
+            showLoading(true);
             
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -610,6 +692,17 @@
                 doc.setFont(undefined, 'normal');
                 y += (splitTitle.length * 7) + 2;
                 
+                // Incrustar imagen generada si existe
+                if (q.generatedImageUrl) {
+                    try {
+                        const base64Img = await getBase64ImageFromUrl(q.generatedImageUrl);
+                        doc.addImage(base64Img, 'JPEG', 50, y, 100, 100);
+                        y += 105;
+                    } catch (e) {
+                        console.error("No se pudo cargar la imagen para el PDF", e);
+                    }
+                }
+                
                 if (q.type === 'Opción Múltiple' && q.options) {
                     const letters = ['a)', 'b)', 'c)', 'd)'];
                     q.options.forEach((opt, i) => {
@@ -630,6 +723,7 @@
             }
             
             doc.save("TUKU_Examen_Alumno.pdf");
+            showLoading(false);
         }
 
         function exportAnswersPDF() {
