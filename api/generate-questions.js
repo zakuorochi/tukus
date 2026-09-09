@@ -28,10 +28,22 @@ export default async function handler(req, res) {
             }
         }));
 
+        // Lógica condicional para enfocar el examen en refuerzo si el tutor lo requiere
+        let promptFocus = "";
+        if (isRefuerzo && topicsToReinforce && topicsToReinforce.length > 0) {
+            promptFocus = `
+            ATENCIÓN ESPECIAL - EXAMEN DE REFUERZO / RECUPERACIÓN:
+            El alumno ha mostrado dificultades previas en estos temas específicos detectados por TUKUS Tutor: ${topicsToReinforce.join(', ')}.
+            Diseña las 10 preguntas enfocándote exclusivamente en reforzar y evaluar de forma didáctica estos conceptos débiles.
+            `;
+        } else {
+            promptFocus = `Analiza las fotos de los apuntes adjuntos y genera 10 preguntas evaluativas.`;
+        }
+
         const promptText = `
-        Eres un pedagogo experto. Analiza las fotos de los apuntes adjuntos.
+        Eres un pedagogo experto. ${promptFocus}
         Primero, clasifica el tema principal en: "CIENCIAS_MATEMATICAS" o "LETRAS_HUMANIDADES".
-        Genera 10 preguntas evaluativas para un estudiante de ${grade}° grado de primaria.
+        Genera 10 preguntas evaluativas para un estudiante de ${grade}.
         Tipos de pregunta requeridos: ${questionTypes.join(', ')}.
 
         Devuelve un objeto JSON con esta estructura exacta sin caracteres Markdown:
