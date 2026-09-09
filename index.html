@@ -203,12 +203,12 @@
             border: 4px solid var(--accent-blue);
         }
         
-        #videoElement {
+        #videoElement, #videoElementTutor {
             width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1;
         }
         #canvasElement { display: none; }
 
-        .upload-section { margin-top: 10px; padding-top: 15px; display: flex; flex-direction: column; align-items: center; }
+        .upload-section { width: 100%; margin-top: 15px; display: flex; flex-direction: column; align-items: center; }
 
         .queue-container { display: flex; gap: 15px; overflow-x: auto; padding: 15px 5px; }
         .thumb { 
@@ -280,13 +280,11 @@
             <h2>¿En qué grado estás?</h2>
             <p class="subtitle">Selecciona tu nivel escolar primero.</p>
             
-            <!-- Submenú Nivel -->
             <div class="grid-2" id="levelSelection">
                 <div class="card-select level-opt" onclick="selectLevel('Primaria', this)">🎒 Nivel Primaria</div>
                 <div class="card-select level-opt" onclick="selectLevel('Secundaria', this)">🎓 Nivel Secundaria</div>
             </div>
 
-            <!-- Grados Primaria (Oculto inicialmente) -->
             <div id="gradesPrimaria" class="grid-3" style="display:none; margin-top: 20px;">
                 <div class="card-select grade-opt" onclick="selectGradeNum('1° Primaria', this)">1°</div>
                 <div class="card-select grade-opt" onclick="selectGradeNum('2° Primaria', this)">2°</div>
@@ -296,7 +294,6 @@
                 <div class="card-select grade-opt" onclick="selectGradeNum('6° Primaria', this)">6°</div>
             </div>
 
-            <!-- Grados Secundaria (Oculto inicialmente) -->
             <div id="gradesSecundaria" class="grid-3" style="display:none; margin-top: 20px;">
                 <div class="card-select grade-opt" onclick="selectGradeNum('1° Secundaria', this)">1°</div>
                 <div class="card-select grade-opt" onclick="selectGradeNum('2° Secundaria', this)">2°</div>
@@ -323,6 +320,15 @@
                 <button class="btn btn-primary" style="width: 100%;" onclick="takePhotoAndProcess('photos')">📸 CAPTURAR FOTO</button>
                 <span id="fotoCount" style="color: var(--accent-blue); font-size: 1.2rem; font-weight: 900;">0 FOTOS LISTAS</span>
             </div>
+
+            <!-- BOTÓN RESTAURADO -->
+            <div class="upload-section">
+                <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFileUpload(event, 'photos')">
+                <button class="btn btn-outline" style="width: 100%;" onclick="document.getElementById('fileInput').click()">
+                    📁 Subir fotos guardadas
+                </button>
+            </div>
+
             <div class="queue-container" id="queueBox"></div>
             
             <div class="footer-nav">
@@ -372,7 +378,7 @@
         <!-- 6. Cámara de Revisión (Tutor) -->
         <div class="screen" id="screen6">
             <h2>Revisión del Tutor</h2>
-            <p class="subtitle">Toma fotos del examen resuelto por el alumno.</p>
+            <p class="subtitle">Sube o toma fotos del examen resuelto por el alumno.</p>
             <div class="camera-view">
                 <video id="videoElementTutor" autoplay playsinline></video>
             </div>
@@ -380,6 +386,15 @@
                 <button class="btn btn-primary" style="width: 100%; background: var(--accent-blue); border-color: #2980b9; box-shadow: 0 6px 0px #2980b9;" onclick="takePhotoAndProcess('tutorPhotos')">📸 CAPTURAR RESPUESTAS</button>
                 <span id="fotoCountTutor" style="color: var(--accent-blue); font-size: 1.2rem; font-weight: 900;">0 FOTOS LISTAS</span>
             </div>
+
+            <!-- BOTÓN RESTAURADO PARA TUTOR -->
+            <div class="upload-section">
+                <input type="file" id="fileInputTutor" multiple accept="image/*" style="display: none;" onchange="handleFileUpload(event, 'tutorPhotos')">
+                <button class="btn btn-outline" style="width: 100%;" onclick="document.getElementById('fileInputTutor').click()">
+                    📁 Subir respuestas guardadas
+                </button>
+            </div>
+
             <div class="queue-container" id="queueBoxTutor"></div>
             
             <div class="footer-nav">
@@ -395,20 +410,20 @@
                 <!-- Se inyecta la evaluación de la IA aquí -->
             </div>
             <div class="footer-nav" id="tutorActionButtons" style="flex-direction: column; gap: 10px;">
-                <!-- Botones inyectados dinámicamente: Volver o Examen de Refuerzo -->
+                <!-- Botones inyectados dinámicamente -->
             </div>
         </div>
 
     </div>
 
     <script>
-        let currentLevel = null; // Primaria o Secundaria
-        let currentGrade = null; // Ej: "3° Secundaria"
+        let currentLevel = null;
+        let currentGrade = null;
         let photos = []; 
-        let tutorPhotos = []; // Fotos exclusivas para la revisión
+        let tutorPhotos = []; 
         let selectedTypes = [];
         let generatedQuestionsData = null; 
-        let topicsToReinforce = []; // Temas débiles para examen de refuerzo
+        let topicsToReinforce = []; 
         
         const canvas = document.getElementById('canvasElement');
         let stream = null;
@@ -459,7 +474,6 @@
             document.getElementById('resultsBox').innerHTML = '';
         }
 
-        // Selección de Menú y Submenú
         function selectLevel(level, el) {
             document.querySelectorAll('.level-opt').forEach(e => e.classList.remove('selected'));
             el.classList.add('selected');
@@ -476,7 +490,7 @@
         function selectGradeNum(fullGradeName, el) {
             document.querySelectorAll('.grade-opt').forEach(e => e.classList.remove('selected'));
             el.classList.add('selected');
-            currentGrade = fullGradeName; // Ej: "3° Secundaria"
+            currentGrade = fullGradeName; 
             document.getElementById('btnGrade').disabled = false;
         }
 
@@ -510,7 +524,6 @@
             if (!stream) return alert("Cámara no iniciada.");
             showLoading(true);
 
-            // Determina de qué video tomar la foto
             const videoEl = targetArrayName === 'photos' ? document.getElementById('videoElement') : document.getElementById('videoElementTutor');
             const targetArray = targetArrayName === 'photos' ? photos : tutorPhotos;
 
@@ -530,6 +543,55 @@
             
             renderQueue(targetArrayName);
             setTimeout(() => { showLoading(false); }, 400); 
+        }
+
+        // NUEVAS FUNCIONES PARA MANEJO DE ARCHIVOS ADJUNTOS
+        async function handleFileUpload(event, targetArrayName) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            showLoading(true);
+
+            for (let i = 0; i < files.length; i++) {
+                await processFileImage(files[i], targetArrayName);
+            }
+
+            event.target.value = '';
+            renderQueue(targetArrayName);
+            showLoading(false);
+        }
+
+        function processFileImage(file, targetArrayName) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const MAX_WIDTH = 1280;
+                        let scale = 1;
+                        if (img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
+                        
+                        canvas.width = img.width * scale;
+                        canvas.height = img.height * scale;
+                        const ctx = canvas.getContext('2d');
+                        
+                        ctx.filter = 'contrast(150%) grayscale(100%) brightness(110%)';
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        const processedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                        
+                        if (targetArrayName === 'photos') {
+                            photos.push(processedBase64);
+                        } else {
+                            tutorPhotos.push(processedBase64);
+                        }
+                        
+                        resolve();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
         }
 
         function deletePhoto(index, targetArrayName) {
@@ -557,7 +619,6 @@
             document.getElementById(btnId).disabled = arr.length === 0;
         }
 
-        // Generación de Preguntas
         async function handleGenerateQuestions(isRefuerzo = false) {
             goToScreen(5);
             const box = document.getElementById('resultsBox');
@@ -565,7 +626,6 @@
             
             showLoading(true, "Creando Examen TUKUS", "Analizando apuntes...");
 
-            // payload especial si es refuerzo
             const payload = { 
                 images: photos, 
                 grade: currentGrade, 
@@ -612,7 +672,6 @@
                 return; 
             }
 
-            // Flujo normal de texto
             try {
                 const response = await fetch('/api/generate-questions', {
                     method: 'POST',
@@ -653,9 +712,8 @@
             });
         }
 
-        // TUKUS TUTOR FLOW
         function startTutorReview() {
-            tutorPhotos = []; // Reiniciamos fotos del tutor
+            tutorPhotos = []; 
             renderQueue('tutorPhotos');
             goToScreen(6);
         }
@@ -670,7 +728,6 @@
             showLoading(true, "TUKUS Tutor Evaluando", "Calificando respuestas...");
 
             try {
-                // Endpoint nuevo que deberás crear en tu backend
                 const response = await fetch('/api/evaluate-exam', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -689,7 +746,7 @@
                     `;
                     
                     if (data.needsReinforcement) {
-                        topicsToReinforce = data.weakTopics; // Guardamos temas débiles devueltos por IA
+                        topicsToReinforce = data.weakTopics;
                         box.innerHTML += `<div style="margin-top:15px; padding:10px; background:#fff3e0; border-left: 4px solid var(--primary);"><strong style="color:var(--primary);">Puntos a reforzar:</strong><br>${topicsToReinforce.join(', ')}</div>`;
                         
                         btns.innerHTML = `
@@ -711,7 +768,6 @@
             }
         }
 
-        // PDF EXPORT (Ajustado a 1 página)
         const getBase64ImageFromUrl = (url) => {
             return new Promise((resolve, reject) => {
                 let img = new Image();
@@ -749,7 +805,6 @@
                 return;
             }
 
-            // Examen de texto comprimido para 1 página
             doc.setFontSize(18);
             doc.setTextColor(242, 138, 63);
             doc.text("EXAMEN TUKUS", 105, 15, null, null, "center");
@@ -778,11 +833,10 @@
                 if (q.type === 'Opción Múltiple' && q.options) {
                     const letters = ['a)', 'b)', 'c)', 'd)'];
                     let xOffset = 20;
-                    // Imprimir opciones en 2 columnas para ahorrar espacio vertical
                     q.options.forEach((opt, i) => {
                         doc.text(`${letters[i]} ${opt}`, xOffset, y);
                         xOffset += 85; 
-                        if ((i + 1) % 2 === 0) { y += 5; xOffset = 20; } // salto de línea cada 2
+                        if ((i + 1) % 2 === 0) { y += 5; xOffset = 20; } 
                     });
                     if (q.options.length % 2 !== 0) y += 5;
                     y += 3;
