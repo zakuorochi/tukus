@@ -380,384 +380,368 @@
     </div>
 
     <script>
-        let currentGrade = null;
-        let photos = []; 
-        let selectedTypes = [];
-        let generatedQuestionsData = null; 
-        
-        const video = document.getElementById('videoElement');
-        const canvas = document.getElementById('canvasElement');
-        let stream = null;
+       let currentGrade = null;
+let photos = []; 
+let selectedTypes = [];
+let generatedQuestionsData = null; 
 
-        function showLoading(show) {
-            document.getElementById('loadingOverlay').classList.toggle('active', show);
-        }
+const video = document.getElementById('videoElement');
+const canvas = document.getElementById('canvasElement');
+let stream = null;
 
-        function goToScreen(num) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('screen' + num).classList.add('active');
-            
-            const header = document.getElementById('mainHeader');
-            if(num === 3) {
-                header.style.display = 'none';
-            } else {
-                header.style.display = 'flex';
-            }
+function showLoading(show) {
+    document.getElementById('loadingOverlay').classList.toggle('active', show);
+}
 
-            document.getElementById('btnHome').style.display = num > 1 ? 'block' : 'none';
-            
-            if(num === 1) resetApp();
-            if(num === 3) startCamera();
-        }
+function goToScreen(num) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen' + num).classList.add('active');
+    
+    const header = document.getElementById('mainHeader');
+    if(num === 3) {
+        header.style.display = 'none';
+    } else {
+        header.style.display = 'flex';
+    }
 
-        function resetApp() {
-            currentGrade = null;
-            photos = [];
-            selectedTypes = [];
-            generatedQuestionsData = null;
-            
-            document.querySelectorAll('.grade-opt, .type-opt').forEach(el => el.classList.remove('selected'));
-            document.getElementById('btnGrade').disabled = true;
-            document.getElementById('btnPhotos').disabled = true;
-            document.getElementById('btnGenerate').disabled = true;
-            
-            renderQueue();
-            document.getElementById('resultsBox').innerHTML = '';
-        }
+    document.getElementById('btnHome').style.display = num > 1 ? 'block' : 'none';
+    
+    if(num === 1) resetApp();
+    if(num === 3) startCamera();
+}
 
-        function selectGrade(grade, el) {
-            document.querySelectorAll('.grade-opt').forEach(e => e.classList.remove('selected'));
-            el.classList.add('selected');
-            currentGrade = grade;
-            document.getElementById('btnGrade').disabled = false;
-        }
+function resetApp() {
+    currentGrade = null;
+    photos = [];
+    selectedTypes = [];
+    generatedQuestionsData = null;
+    
+    document.querySelectorAll('.grade-opt, .type-opt').forEach(el => el.classList.remove('selected'));
+    document.getElementById('btnGrade').disabled = true;
+    document.getElementById('btnPhotos').disabled = true;
+    document.getElementById('btnGenerate').disabled = true;
+    
+    renderQueue();
+    document.getElementById('resultsBox').innerHTML = '';
+}
 
-        function toggleType(type, el) {
-            const idx = selectedTypes.indexOf(type);
-            if(idx > -1) {
-                selectedTypes.splice(idx, 1);
-                el.classList.remove('selected');
-            } else {
-                selectedTypes.push(type);
-                el.classList.add('selected');
-            }
-            document.getElementById('btnGenerate').disabled = selectedTypes.length === 0;
-        }
+function selectGrade(grade, el) {
+    document.querySelectorAll('.grade-opt').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    currentGrade = grade;
+    document.getElementById('btnGrade').disabled = false;
+}
 
-      async function startCamera() {
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' } 
-            });
-            video.srcObject = stream;
-        } catch (err) {
-            console.warn("Cámara no disponible o bloqueada.", err);
-            alert("No se pudo iniciar la cámara automáticamente. Por favor, usa la opción de subir archivos.");
-        }
-      }
-      
-        function stopCamera() {
-            if (stream) stream.getTracks().forEach(track => track.stop());
-        }
+function toggleType(type, el) {
+    const idx = selectedTypes.indexOf(type);
+    if(idx > -1) {
+        selectedTypes.splice(idx, 1);
+        el.classList.remove('selected');
+    } else {
+        selectedTypes.push(type);
+        el.classList.add('selected');
+    }
+    document.getElementById('btnGenerate').disabled = selectedTypes.length === 0;
+}
 
-        function takePhotoAndProcess() {
-            if (!stream) return alert("Cámara no iniciada.");
-            showLoading(true);
+async function startCamera() {
+try {
+    stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+    });
+    video.srcObject = stream;
+} catch (err) {
+    console.warn("Cámara no disponible o bloqueada.", err);
+    alert("No se pudo iniciar la cámara automáticamente. Por favor, usa la opción de subir archivos.");
+}
+}
 
-            const MAX_WIDTH = 1280; 
-            let scale = 1;
-            if (video.videoWidth > MAX_WIDTH) {
-                scale = MAX_WIDTH / video.videoWidth;
-            }
-            canvas.width = video.videoWidth * scale;
-            canvas.height = video.videoHeight * scale;
-            const ctx = canvas.getContext('2d');
-            
-            ctx.filter = 'contrast(150%) grayscale(100%) brightness(110%)';
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const processedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-            
-            photos.push(processedBase64);
-            renderQueue();
-            
-            setTimeout(() => { showLoading(false); }, 400); 
-        }
+function stopCamera() {
+    if (stream) stream.getTracks().forEach(track => track.stop());
+}
 
-        async function handleFileUpload(event) {
-            const files = event.target.files;
-            if (!files || files.length === 0) return;
+function takePhotoAndProcess() {
+    if (!stream) return alert("Cámara no iniciada.");
+    showLoading(true);
 
-            showLoading(true);
+    const MAX_WIDTH = 1280; 
+    let scale = 1;
+    if (video.videoWidth > MAX_WIDTH) {
+        scale = MAX_WIDTH / video.videoWidth;
+    }
+    canvas.width = video.videoWidth * scale;
+    canvas.height = video.videoHeight * scale;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.filter = 'contrast(150%) grayscale(100%) brightness(110%)';
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const processedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+    
+    photos.push(processedBase64);
+    renderQueue();
+    
+    setTimeout(() => { showLoading(false); }, 400); 
+}
 
-            for (let i = 0; i < files.length; i++) {
-                await processFileImage(files[i]);
-            }
+async function handleFileUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-            event.target.value = '';
-            renderQueue();
-            showLoading(false);
-        }
+    showLoading(true);
 
-        function processFileImage(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const MAX_WIDTH = 1280;
-                        let scale = 1;
-                        if (img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
-                        
-                        canvas.width = img.width * scale;
-                        canvas.height = img.height * scale;
-                        const ctx = canvas.getContext('2d');
-                        
-                        ctx.filter = 'contrast(150%) grayscale(100%) brightness(110%)';
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
-                        const processedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                        photos.push(processedBase64);
-                        resolve();
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-        }
+    for (let i = 0; i < files.length; i++) {
+        await processFileImage(files[i]);
+    }
 
-        function deletePhoto(index) {
-            photos.splice(index, 1);
-            renderQueue();
-        }
+    event.target.value = '';
+    renderQueue();
+    showLoading(false);
+}
 
-        function renderQueue() {
-            const box = document.getElementById('queueBox');
-            box.innerHTML = '';
-            photos.forEach((base64String, i) => {
-                box.innerHTML += `
-                    <div class="thumb" style="background-image: url('${base64String}')">
-                        <button class="thumb-del" onclick="deletePhoto(${i})">X</button>
-                    </div>`;
-            });
-            document.getElementById('fotoCount').innerText = `${photos.length} FOTO${photos.length !== 1 ? 'S' : ''} LISTA${photos.length !== 1 ? 'S' : ''}`;
-            document.getElementById('btnPhotos').disabled = photos.length === 0;
-        }
-
-        async function handleGenerateQuestions() {
-            goToScreen(5);
-            const box = document.getElementById('resultsBox');
-            box.innerHTML = '';
-            showLoading(true);
-            
-            try {
-                const response = await fetch('/api/generate-questions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ images: photos, grade: currentGrade, questionTypes: selectedTypes })
-                });
+function processFileImage(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const MAX_WIDTH = 1280;
+                let scale = 1;
+                if (img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
                 
-                const data = await response.json();
-                showLoading(false);
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                const ctx = canvas.getContext('2d');
                 
-                if (response.ok && data.success && data.questions) {
-                    generatedQuestionsData = data.questions; 
-                    renderQuestions(data.questions);
-                } else {
-                    box.innerHTML = `<h3 style="color:red;">Ups! Algo salió mal:</h3><p>${data.message}</p>`;
-                }
-            } catch(err) {
-                console.error(err);
-                box.innerHTML = '<h3 style="color:red;">No hay internet 📶</h3><p>Revisa tu conexión y vuelve a intentar.</p>';
-                showLoading(false);
-            } 
-        }
-
-        function renderQuestions(questions) {
-            const box = document.getElementById('resultsBox');
-            box.innerHTML = ''; 
-
-            questions.forEach(q => {
-                let optionsHtml = '';
-                if (q.options && q.options.length > 0) {
-                    optionsHtml = `<ul style="margin-left:20px; font-size:1.1rem; color:var(--text-muted); list-style-type: none; padding-top: 5px;">
-                        ${q.options.map((opt, i) => `<li style="margin-bottom: 5px;"><strong>${['A','B','C','D'][i]})</strong> ${opt}</li>`).join('')}
-                    </ul>`;
-                }
+                ctx.filter = 'contrast(150%) grayscale(100%) brightness(110%)';
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
-                box.innerHTML += `
-                    <div class="question-item" style="margin-bottom: 25px;">
-                        <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span style="font-size: 1.1rem;">${q.statement}</span>
-                        <br><small style="color:var(--accent-blue); font-weight:bold;">[${q.type}]</small>
-                        ${imageHtml}
-                        ${optionsHtml}
-                    </div>
-                `;
-            });
-
-            // Procesar imágenes en segundo plano si la pregunta lo exige
-            questions.forEach(q => {
-                if (q.imagePrompt && q.imagePrompt !== "null" && q.imagePrompt.trim() !== "") {
-                    fetchImageForQuestion(q.id, q.imagePrompt);
-                }
-            });
-        }
-
-        async function fetchImageForQuestion(questionId, prompt) {
-            const container = document.getElementById(`img-container-${questionId}`);
-            if (!container) return;
-
-            try {
-                const response = await fetch('/api/generate-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ imagePrompt: prompt })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success && data.imageUrl) {
-                    container.innerHTML = `<img src="${data.imageUrl}" alt="Gráfico de apoyo" style="max-width: 100%; height: auto; border-radius: 8px;">`;
-                    const questionRef = generatedQuestionsData.find(q => q.id === questionId);
-                    if (questionRef) questionRef.generatedImageUrl = data.imageUrl;
-                } else {
-                    container.innerHTML = `<span style="color: #ef4444; font-size: 0.9rem;">❌ Gráfico no disponible.</span>`;
-                }
-            } catch (error) {
-                console.error("Error obteniendo imagen:", error);
-                container.innerHTML = `<span style="color: #ef4444; font-size: 0.9rem;">❌ Error de conexión al dibujar.</span>`;
-            }
-        }
-
-        // Función auxiliar para convertir URLs externas a Base64 y usarlas en PDF
-        const getBase64ImageFromUrl = (url) => {
-            return new Promise((resolve, reject) => {
-                let img = new Image();
-                img.crossOrigin = 'Anonymous';
-                img.onload = () => {
-                    let canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    let ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas.toDataURL('image/jpeg'));
-                };
-                img.onerror = reject;
-                img.src = url;
-            });
+                const processedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                photos.push(processedBase64);
+                resolve();
+            };
+            img.src = e.target.result;
         };
+        reader.readAsDataURL(file);
+    });
+}
 
-        async function exportQuestionsPDF() {
-            if(!generatedQuestionsData) return;
-            showLoading(true);
+function deletePhoto(index) {
+    photos.splice(index, 1);
+    renderQueue();
+}
+
+function renderQueue() {
+    const box = document.getElementById('queueBox');
+    box.innerHTML = '';
+    photos.forEach((base64String, i) => {
+        box.innerHTML += `
+            <div class="thumb" style="background-image: url('${base64String}')">
+                <button class="thumb-del" onclick="deletePhoto(${i})">X</button>
+            </div>`;
+    });
+    document.getElementById('fotoCount').innerText = `${photos.length} FOTO${photos.length !== 1 ? 'S' : ''} LISTA${photos.length !== 1 ? 'S' : ''}`;
+    document.getElementById('btnPhotos').disabled = photos.length === 0;
+}
+
+async function handleGenerateQuestions() {
+    goToScreen(5);
+    const box = document.getElementById('resultsBox');
+    box.innerHTML = '';
+    showLoading(true);
+    
+    try {
+        const response = await fetch('/api/generate-questions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ images: photos, grade: currentGrade, questionTypes: selectedTypes })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success && data.questions) {
+            generatedQuestionsData = data.questions; 
             
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.setFontSize(22);
-            doc.setTextColor(242, 138, 63);
-            doc.text("EXAMEN TUKU", 105, 20, null, null, "center");
-            
-            doc.setFontSize(12);
-            doc.setTextColor(100, 116, 139);
-            doc.text(`Nombre: _________________________   Grado: ${currentGrade}° Primaria`, 20, 35);
-            
-            doc.setLineWidth(0.5);
-            doc.line(20, 40, 190, 40);
-            
-            doc.setTextColor(30, 41, 59);
-            let y = 55;
-            
-            for (let index = 0; index < generatedQuestionsData.length; index++) {
-                const q = generatedQuestionsData[index];
+            // 1. Si pidieron gráficos, llamamos a Meta Muse y preparamos el contenedor visual
+            if (selectedTypes.includes('Ejercicios Gráficos (IA)')) {
+                const imgBox = document.createElement('div');
+                imgBox.id = 'muse-image-container';
+                imgBox.innerHTML = '<div style="text-align:center; padding:20px; background:#f8fafc; border:2px dashed #cbd5e1; border-radius:12px; margin-bottom:25px;"><span style="color:#64748b; font-weight:bold;">🎨 Meta Muse está dibujando tu lámina de ejercicios...</span></div>';
+                box.appendChild(imgBox);
                 
-                if(y > 250) {
-                    doc.addPage();
-                    y = 20;
-                }
-                
-                doc.setFont(undefined, 'bold');
-                const titleStr = `${index + 1}. ${q.statement}`;
-                const splitTitle = doc.splitTextToSize(titleStr, 170);
-                doc.text(splitTitle, 20, y);
-                doc.setFont(undefined, 'normal');
-                y += (splitTitle.length * 7) + 2;
-                
-                // Incrustar imagen generada si existe
-                if (q.generatedImageUrl) {
-                    try {
-                        const base64Img = await getBase64ImageFromUrl(q.generatedImageUrl);
-                        doc.addImage(base64Img, 'JPEG', 50, y, 100, 100);
-                        y += 105;
-                    } catch (e) {
-                        console.error("No se pudo cargar la imagen para el PDF", e);
+                fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        images: photos, 
+                        questionsData: data.questions, 
+                        grade: currentGrade 
+                    })
+                }).then(res => res.json()).then(imgData => {
+                    if (imgData.success && imgData.imageUrl) {
+                        imgBox.innerHTML = `<div style="text-align:center; margin-bottom: 25px;"><img src="${imgData.imageUrl}" style="max-width: 100%; border-radius: 12px; border: 4px solid var(--accent-blue); box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></div>`;
+                    } else {
+                        imgBox.innerHTML = `<div style="text-align:center; padding:10px; margin-bottom:25px;"><span style="color:#ef4444;">❌ Gráfico no disponible: ${imgData.message}</span></div>`;
                     }
-                }
-                
-                if (q.type === 'Opción Múltiple' && q.options) {
-                    const letters = ['a)', 'b)', 'c)', 'd)'];
-                    q.options.forEach((opt, i) => {
-                        if(y > 280) { doc.addPage(); y = 20; }
-                        doc.text(`${letters[i]} ${opt}`, 25, y);
-                        y += 8;
-                    });
-                    y += 5;
-                } else if (q.type === 'Verdadero / Falso') {
-                    doc.text("(   ) Verdadero       (   ) Falso", 25, y);
-                    y += 12;
-                } else {
-                    doc.line(20, y, 190, y);
-                    y += 10;
-                    doc.line(20, y, 190, y);
-                    y += 15;
-                }
+                }).catch(err => {
+                    imgBox.innerHTML = `<div style="text-align:center; padding:10px; margin-bottom:25px;"><span style="color:#ef4444;">❌ Error de conexión al generar gráfico.</span></div>`;
+                });
             }
-            
-            doc.save("TUKU_Examen_Alumno.pdf");
-            showLoading(false);
-        }
 
-        function exportAnswersPDF() {
-            if(!generatedQuestionsData) return;
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.setFontSize(18);
-            doc.setTextColor(244, 67, 54);
-            doc.text("TUKU - HOJA DE RESPUESTAS (Maestro)", 105, 20, null, null, "center");
-            
-            doc.setFontSize(12);
-            doc.setTextColor(100, 116, 139);
-            doc.text(`Grado: ${currentGrade}° Primaria`, 20, 30);
-            
-            doc.setLineWidth(0.5);
-            doc.line(20, 35, 190, 35);
-            
-            doc.setTextColor(30, 41, 59);
-            let y = 45;
-            
-            generatedQuestionsData.forEach((q, index) => {
-                if(y > 270) {
-                    doc.addPage();
-                    y = 20;
-                }
-                
-                const shortStatement = q.statement.length > 70 ? q.statement.substring(0, 70) + "..." : q.statement;
-                doc.setFont(undefined, 'bold');
-                doc.text(`${index + 1}. ${shortStatement}`, 20, y);
-                y += 7;
-                
-                doc.setFont(undefined, 'normal');
-                doc.setTextColor(76, 175, 80); 
-                const splitAnswer = doc.splitTextToSize(`Rpta: ${q.answer}`, 160);
-                doc.text(splitAnswer, 30, y);
-                
-                doc.setTextColor(30, 41, 59); 
-                y += (splitAnswer.length * 7) + 8;
-            });
-            
-            doc.save("TUKU_Clave_Respuestas.pdf");
+            // 2. Renderizamos las preguntas de texto debajo
+            renderQuestions(data.questions);
+            showLoading(false);
+
+        } else {
+            showLoading(false);
+            box.innerHTML = `<h3 style="color:red;">Ups! Algo salió mal:</h3><p>${data.message}</p>`;
         }
+    } catch(err) {
+        console.error(err);
+        box.innerHTML = '<h3 style="color:red;">No hay internet 📶</h3><p>Revisa tu conexión y vuelve a intentar.</p>';
+        showLoading(false);
+    } 
+}
+
+function renderQuestions(questions) {
+    const box = document.getElementById('resultsBox');
+
+    questions.forEach(q => {
+        let optionsHtml = '';
+        if (q.options && q.options.length > 0) {
+            optionsHtml = `<ul style="margin-left:20px; font-size:1.1rem; color:var(--text-muted); list-style-type: none; padding-top: 5px;">
+                ${q.options.map((opt, i) => `<li style="margin-bottom: 5px;"><strong>${['A','B','C','D'][i]})</strong> ${opt}</li>`).join('')}
+            </ul>`;
+        }
+        
+        box.innerHTML += `
+            <div class="question-item" style="margin-bottom: 25px;">
+                <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span style="font-size: 1.1rem;">${q.statement}</span>
+                <br><small style="color:var(--accent-blue); font-weight:bold;">[${q.type}]</small>
+                ${optionsHtml}
+            </div>
+        `;
+    });
+}
+
+// Función auxiliar para convertir URLs externas a Base64 y usarlas en PDF
+const getBase64ImageFromUrl = (url) => {
+    return new Promise((resolve, reject) => {
+        let img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+            let canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            let ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/jpeg'));
+        };
+        img.onerror = reject;
+        img.src = url;
+    });
+};
+
+async function exportQuestionsPDF() {
+    if(!generatedQuestionsData) return;
+    showLoading(true);
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(22);
+    doc.setTextColor(242, 138, 63);
+    doc.text("EXAMEN TUKU", 105, 20, null, null, "center");
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Nombre: _________________________   Grado: ${currentGrade}° Primaria`, 20, 35);
+    
+    doc.setLineWidth(0.5);
+    doc.line(20, 40, 190, 40);
+    
+    doc.setTextColor(30, 41, 59);
+    let y = 55;
+    
+    for (let index = 0; index < generatedQuestionsData.length; index++) {
+        const q = generatedQuestionsData[index];
+        
+        if(y > 250) {
+            doc.addPage();
+            y = 20;
+        }
+        
+        doc.setFont(undefined, 'bold');
+        const titleStr = `${index + 1}. ${q.statement}`;
+        const splitTitle = doc.splitTextToSize(titleStr, 170);
+        doc.text(splitTitle, 20, y);
+        doc.setFont(undefined, 'normal');
+        y += (splitTitle.length * 7) + 2;
+        
+        if (q.type === 'Opción Múltiple' && q.options) {
+            const letters = ['a)', 'b)', 'c)', 'd)'];
+            q.options.forEach((opt, i) => {
+                if(y > 280) { doc.addPage(); y = 20; }
+                doc.text(`${letters[i]} ${opt}`, 25, y);
+                y += 8;
+            });
+            y += 5;
+        } else if (q.type === 'Verdadero / Falso') {
+            doc.text("(   ) Verdadero       (   ) Falso", 25, y);
+            y += 12;
+        } else {
+            doc.line(20, y, 190, y);
+            y += 10;
+            doc.line(20, y, 190, y);
+            y += 15;
+        }
+    }
+    
+    doc.save("TUKU_Examen_Alumno.pdf");
+    showLoading(false);
+}
+
+function exportAnswersPDF() {
+    if(!generatedQuestionsData) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.setTextColor(244, 67, 54);
+    doc.text("TUKU - HOJA DE RESPUESTAS (Maestro)", 105, 20, null, null, "center");
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Grado: ${currentGrade}° Primaria`, 20, 30);
+    
+    doc.setLineWidth(0.5);
+    doc.line(20, 35, 190, 35);
+    
+    doc.setTextColor(30, 41, 59);
+    let y = 45;
+    
+    generatedQuestionsData.forEach((q, index) => {
+        if(y > 270) {
+            doc.addPage();
+            y = 20;
+        }
+        
+        const shortStatement = q.statement.length > 70 ? q.statement.substring(0, 70) + "..." : q.statement;
+        doc.setFont(undefined, 'bold');
+        doc.text(`${index + 1}. ${shortStatement}`, 20, y);
+        y += 7;
+        
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(76, 175, 80); 
+        const splitAnswer = doc.splitTextToSize(`Rpta: ${q.answer}`, 160);
+        doc.text(splitAnswer, 30, y);
+        
+        doc.setTextColor(30, 41, 59); 
+        y += (splitAnswer.length * 7) + 8;
+    });
+    
+    doc.save("TUKU_Clave_Respuestas.pdf");
+}
     </script>
 </body>
 </html>
