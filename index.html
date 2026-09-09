@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TUKU - Aprende Jugando</title>
+    <title>TUKUS - Aprende Jugando</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
@@ -119,6 +119,7 @@
             gap: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            text-align: center;
         }
         
         .btn-primary { 
@@ -156,7 +157,7 @@
         @media (min-width: 600px) { .grid-2 { grid-template-columns: repeat(2, 1fr); } }
         
         .card-select {
-            padding: 25px 15px; 
+            padding: 20px 10px; 
             background: #fff;
             border: 3px solid #e0e0e0; 
             border-radius: 20px;
@@ -164,7 +165,7 @@
             cursor: pointer; 
             transition: 0.2s; 
             font-weight: 800;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--text-muted);
             box-shadow: 0 4px 0px #e0e0e0;
         }
@@ -205,48 +206,32 @@
         #videoElement {
             width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1;
         }
-        
         #canvasElement { display: none; }
 
-        .upload-section {
-            margin-top: 10px; padding-top: 15px; 
-            display: flex; flex-direction: column; align-items: center;
-        }
+        .upload-section { margin-top: 10px; padding-top: 15px; display: flex; flex-direction: column; align-items: center; }
 
         .queue-container { display: flex; gap: 15px; overflow-x: auto; padding: 15px 5px; }
         .thumb { 
             width: 80px; height: 80px; background: #fff; 
-            border: 3px solid var(--primary);
-            border-radius: 12px; 
+            border: 3px solid var(--primary); border-radius: 12px; 
             display: flex; align-items: center; justify-content: center; 
-            position: relative; font-size: 12px; background-size: cover; background-position: center;
-            box-shadow: 0 4px 0px var(--primary);
-            flex-shrink: 0;
+            position: relative; background-size: cover; background-position: center;
+            box-shadow: 0 4px 0px var(--primary); flex-shrink: 0;
         }
         .thumb-del { 
             position: absolute; top: -8px; right: -8px; 
-            background: #ff5252; color: white; 
-            border-radius: 50%; width: 24px; height: 24px; 
-            border: 2px solid white; cursor: pointer; 
-            font-weight: bold; display: flex; align-items: center; justify-content: center;
+            background: #ff5252; color: white; border-radius: 50%; width: 24px; height: 24px; 
+            border: 2px solid white; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center;
         }
 
         .results-box { 
-            flex: 1; 
-            overflow-y: auto; 
-            background: #fff; 
-            padding: 20px; 
-            border-radius: var(--radius-large); 
-            border: 4px solid #e0e0e0; 
-            margin-bottom: 20px;
-            box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
+            flex: 1; overflow-y: auto; background: #fff; padding: 20px; 
+            border-radius: var(--radius-large); border: 4px solid #e0e0e0; 
+            margin-bottom: 20px; box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
         }
         .question-item { 
-            padding: 15px; 
-            background: var(--bg-color);
-            border-radius: 12px;
-            margin-bottom: 15px; 
-            border: 2px solid var(--border); 
+            padding: 15px; background: var(--bg-color); border-radius: 12px;
+            margin-bottom: 15px; border: 2px solid var(--border); 
         }
 
         .loading-overlay {
@@ -257,12 +242,9 @@
         .loading-overlay.active { display: flex; }
         
         .spinner {
-            width: 60px; height: 60px;
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            width: 60px; height: 60px; border: 8px solid #f3f3f3;
+            border-top: 8px solid var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -272,14 +254,14 @@
     <div class="container">
         <div class="loading-overlay" id="loadingOverlay">
             <div class="spinner"></div>
-            <h2 style="color: var(--primary);">¡La magia de TUKU está trabajando!</h2>
-            <p style="font-weight: bold; color: var(--text-muted);">Por favor, espera un momentito...</p>
+            <h2 style="color: var(--primary);" id="loadingTitle">¡La magia de TUKUS está trabajando!</h2>
+            <p style="font-weight: bold; color: var(--text-muted);" id="loadingDesc">Por favor, espera un momentito...</p>
         </div>
 
         <button class="btn-home" id="btnHome" onclick="goToScreen(1)">🏠 Volver</button>
 
         <div class="logo-container" id="mainHeader">
-            <img src="/logotuku.png" alt="Logo TUKU" class="main-logo-img">
+            <img src="/logotuku.png" alt="Logo TUKUS" class="main-logo-img">
         </div>
 
         <!-- 1. Inicio -->
@@ -293,46 +275,54 @@
             </div>
         </div>
 
-        <!-- 2. Selección de Grado -->
+        <!-- 2. Selección de Nivel y Grado -->
         <div class="screen" id="screen2">
             <h2>¿En qué grado estás?</h2>
-            <p class="subtitle">Elige tu nivel para hacer preguntas a tu medida.</p>
-            <div class="grid-3">
-                <div class="card-select grade-opt" onclick="selectGrade(1, this)">1° Primaria</div>
-                <div class="card-select grade-opt" onclick="selectGrade(2, this)">2° Primaria</div>
-                <div class="card-select grade-opt" onclick="selectGrade(3, this)">3° Primaria</div>
-                <div class="card-select grade-opt" onclick="selectGrade(4, this)">4° Primaria</div>
-                <div class="card-select grade-opt" onclick="selectGrade(5, this)">5° Primaria</div>
-                <div class="card-select grade-opt" onclick="selectGrade(6, this)">6° Primaria</div>
+            <p class="subtitle">Selecciona tu nivel escolar primero.</p>
+            
+            <!-- Submenú Nivel -->
+            <div class="grid-2" id="levelSelection">
+                <div class="card-select level-opt" onclick="selectLevel('Primaria', this)">🎒 Nivel Primaria</div>
+                <div class="card-select level-opt" onclick="selectLevel('Secundaria', this)">🎓 Nivel Secundaria</div>
             </div>
+
+            <!-- Grados Primaria (Oculto inicialmente) -->
+            <div id="gradesPrimaria" class="grid-3" style="display:none; margin-top: 20px;">
+                <div class="card-select grade-opt" onclick="selectGradeNum('1° Primaria', this)">1°</div>
+                <div class="card-select grade-opt" onclick="selectGradeNum('2° Primaria', this)">2°</div>
+                <div class="card-select grade-opt" onclick="selectGradeNum('3° Primaria', this)">3°</div>
+                <div class="card-select grade-opt" onclick="selectGradeNum('4° Primaria', this)">4°</div>
+                <div class="card-select grade-opt" onclick="selectGradeNum('5° Primaria', this)">5°</div>
+                <div class="card-select grade-opt" onclick="selectGradeNum('6° Primaria', this)">6°</div>
+            </div>
+
+            <!-- Grados Secundaria (Oculto inicialmente) -->
+            <div id="gradesSecundaria" class="grid-3" style="display:none; margin-top: 20px;">
+                <div class="card-select grade-opt" onclick="selectGradeNum('1° Secundaria', this)">1°</div>
+                <div class="card-select grade-opt" onclick="selectGradeNum('2° Secundaria', this)">2°</div>
+                <div class="card-select grade-opt" onclick="selectGradeNum('3° Secundaria', this)">3°</div>
+                <div class="card-select grade-opt" onclick="selectGradeNum('4° Secundaria', this)">4°</div>
+                <div class="card-select grade-opt" onclick="selectGradeNum('5° Secundaria', this)">5°</div>
+            </div>
+
             <div class="footer-nav">
                 <button class="btn btn-outline" onclick="goToScreen(1)">⬅ Atrás</button>
                 <button class="btn btn-primary" id="btnGrade" disabled onclick="goToScreen(3)">Siguiente ➡</button>
             </div>
         </div>
 
-        <!-- 3. Cámara y Escáner -->
+        <!-- 3. Cámara y Escáner (Generación) -->
         <div class="screen" id="screen3">
             <h2>Escanea tu cuaderno</h2>
-            
             <div class="camera-view">
                 <video id="videoElement" autoplay playsinline></video>
             </div>
-            
             <canvas id="canvasElement"></canvas>
 
             <div style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
-                <button class="btn btn-primary" style="width: 100%;" onclick="takePhotoAndProcess()">📸 CAPTURAR FOTO</button>
+                <button class="btn btn-primary" style="width: 100%;" onclick="takePhotoAndProcess('photos')">📸 CAPTURAR FOTO</button>
                 <span id="fotoCount" style="color: var(--accent-blue); font-size: 1.2rem; font-weight: 900;">0 FOTOS LISTAS</span>
             </div>
-
-            <div class="upload-section">
-                <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
-                <button class="btn btn-outline" style="width: 100%;" onclick="document.getElementById('fileInput').click()">
-                    📁 Subir fotos guardadas
-                </button>
-            </div>
-
             <div class="queue-container" id="queueBox"></div>
             
             <div class="footer-nav">
@@ -359,426 +349,489 @@
             
             <div class="footer-nav">
                 <button class="btn btn-outline" onclick="goToScreen(3)">⬅ Atrás</button>
-                <button class="btn btn-primary" id="btnGenerate" disabled onclick="handleGenerateQuestions()">¡Crear Examen! ✨</button>
+                <button class="btn btn-primary" id="btnGenerate" disabled onclick="handleGenerateQuestions(false)">¡Crear Examen! ✨</button>
             </div>
         </div>
 
-        <!-- 5. Resultados -->
+        <!-- 5. Resultados y Opciones Post-Examen -->
         <div class="screen" id="screen5">
             <h2>¡Tu examen está listo!</h2>
             <p class="subtitle">Hemos creado preguntas súper divertidas.</p>
-            <div class="results-box" id="resultsBox">
-            </div>
+            <div class="results-box" id="resultsBox"></div>
+            
             <div class="footer-nav" style="flex-direction: column; gap: 10px;">
                 <div style="display: flex; gap: 10px; width: 100%;">
-                    <button class="btn btn-primary" style="flex:1; background: var(--accent-green); border-color: #4caf50; box-shadow: 0 6px 0px #4caf50;" onclick="exportQuestionsPDF()">📄 Imprimir Examen</button>
-                    <button class="btn btn-outline" style="flex:1; border-color: #f44336; color: #f44336; box-shadow: 0 6px 0px #f44336;" onclick="exportAnswersPDF()">🗝️ Clave Maestro</button>
+                    <button class="btn btn-primary" style="flex:1; background: var(--accent-green); border-color: #4caf50; box-shadow: 0 6px 0px #4caf50; padding: 12px 10px; font-size: 1rem;" onclick="exportQuestionsPDF()">📄 Imprimir Examen</button>
+                    <button class="btn btn-outline" style="flex:1; border-color: #f44336; color: #f44336; box-shadow: 0 6px 0px #f44336; padding: 12px 10px; font-size: 1rem;" onclick="exportAnswersPDF()">🗝️ Hoja de Resultados</button>
                 </div>
-                <button class="btn btn-outline" style="width: 100%; border-color: var(--accent-yellow); color: #f57f17; box-shadow: 0 6px 0px var(--accent-yellow);" onclick="handleGenerateQuestions()">🔄 ¡Quiero otras preguntas!</button>
+                <button class="btn btn-primary" style="width: 100%; background: var(--accent-blue); border-color: #2980b9; box-shadow: 0 6px 0px #2980b9;" onclick="startTutorReview()">🧠 Revisión con TUKUS Tutor</button>
+                <button class="btn btn-outline" style="width: 100%; border-color: var(--accent-yellow); color: #f57f17; box-shadow: 0 6px 0px var(--accent-yellow);" onclick="handleGenerateQuestions(false)">🔄 ¡Quiero otras preguntas!</button>
             </div>
         </div>
+
+        <!-- 6. Cámara de Revisión (Tutor) -->
+        <div class="screen" id="screen6">
+            <h2>Revisión del Tutor</h2>
+            <p class="subtitle">Toma fotos del examen resuelto por el alumno.</p>
+            <div class="camera-view">
+                <video id="videoElementTutor" autoplay playsinline></video>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
+                <button class="btn btn-primary" style="width: 100%; background: var(--accent-blue); border-color: #2980b9; box-shadow: 0 6px 0px #2980b9;" onclick="takePhotoAndProcess('tutorPhotos')">📸 CAPTURAR RESPUESTAS</button>
+                <span id="fotoCountTutor" style="color: var(--accent-blue); font-size: 1.2rem; font-weight: 900;">0 FOTOS LISTAS</span>
+            </div>
+            <div class="queue-container" id="queueBoxTutor"></div>
+            
+            <div class="footer-nav">
+                <button class="btn btn-outline" onclick="stopCamera(); goToScreen(5)">⬅ Cancelar</button>
+                <button class="btn btn-primary" id="btnEvaluate" disabled onclick="stopCamera(); handleTutorReview()">Evaluar Examen 🔎</button>
+            </div>
+        </div>
+
+        <!-- 7. Resultados del Tutor -->
+        <div class="screen" id="screen7">
+            <h2>Análisis de TUKUS Tutor</h2>
+            <div class="results-box" id="tutorResultsBox">
+                <!-- Se inyecta la evaluación de la IA aquí -->
+            </div>
+            <div class="footer-nav" id="tutorActionButtons" style="flex-direction: column; gap: 10px;">
+                <!-- Botones inyectados dinámicamente: Volver o Examen de Refuerzo -->
+            </div>
+        </div>
+
     </div>
 
     <script>
-       let currentGrade = null;
-let photos = []; 
-let selectedTypes = [];
-let generatedQuestionsData = null; 
-
-const video = document.getElementById('videoElement');
-const canvas = document.getElementById('canvasElement');
-let stream = null;
-
-function showLoading(show) {
-    document.getElementById('loadingOverlay').classList.toggle('active', show);
-}
-
-function goToScreen(num) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById('screen' + num).classList.add('active');
-    
-    const header = document.getElementById('mainHeader');
-    if(num === 3) {
-        header.style.display = 'none';
-    } else {
-        header.style.display = 'flex';
-    }
-
-    document.getElementById('btnHome').style.display = num > 1 ? 'block' : 'none';
-    
-    if(num === 1) resetApp();
-    if(num === 3) startCamera();
-}
-
-function resetApp() {
-    currentGrade = null;
-    photos = [];
-    selectedTypes = [];
-    generatedQuestionsData = null;
-    
-    document.querySelectorAll('.grade-opt, .type-opt').forEach(el => el.classList.remove('selected'));
-    document.getElementById('btnGrade').disabled = true;
-    document.getElementById('btnPhotos').disabled = true;
-    document.getElementById('btnGenerate').disabled = true;
-    
-    renderQueue();
-    document.getElementById('resultsBox').innerHTML = '';
-}
-
-function selectGrade(grade, el) {
-    document.querySelectorAll('.grade-opt').forEach(e => e.classList.remove('selected'));
-    el.classList.add('selected');
-    currentGrade = grade;
-    document.getElementById('btnGrade').disabled = false;
-}
-
-function toggleType(type, el) {
-    const idx = selectedTypes.indexOf(type);
-    if(idx > -1) {
-        selectedTypes.splice(idx, 1);
-        el.classList.remove('selected');
-    } else {
-        selectedTypes.push(type);
-        el.classList.add('selected');
-    }
-    document.getElementById('btnGenerate').disabled = selectedTypes.length === 0;
-}
-
-async function startCamera() {
-try {
-    stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-    });
-    video.srcObject = stream;
-} catch (err) {
-    console.warn("Cámara no disponible o bloqueada.", err);
-    alert("No se pudo iniciar la cámara automáticamente. Por favor, usa la opción de subir archivos.");
-}
-}
-
-function stopCamera() {
-    if (stream) stream.getTracks().forEach(track => track.stop());
-}
-
-function takePhotoAndProcess() {
-    if (!stream) return alert("Cámara no iniciada.");
-    showLoading(true);
-
-    const MAX_WIDTH = 1280; 
-    let scale = 1;
-    if (video.videoWidth > MAX_WIDTH) {
-        scale = MAX_WIDTH / video.videoWidth;
-    }
-    canvas.width = video.videoWidth * scale;
-    canvas.height = video.videoHeight * scale;
-    const ctx = canvas.getContext('2d');
-    
-    ctx.filter = 'contrast(150%) grayscale(100%) brightness(110%)';
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    const processedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-    
-    photos.push(processedBase64);
-    renderQueue();
-    
-    setTimeout(() => { showLoading(false); }, 400); 
-}
-
-async function handleFileUpload(event) {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    showLoading(true);
-
-    for (let i = 0; i < files.length; i++) {
-        await processFileImage(files[i]);
-    }
-
-    event.target.value = '';
-    renderQueue();
-    showLoading(false);
-}
-
-function processFileImage(file) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                const MAX_WIDTH = 1280;
-                let scale = 1;
-                if (img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
-                
-                canvas.width = img.width * scale;
-                canvas.height = img.height * scale;
-                const ctx = canvas.getContext('2d');
-                
-                ctx.filter = 'contrast(150%) grayscale(100%) brightness(110%)';
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
-                const processedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                photos.push(processedBase64);
-                resolve();
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
-}
-
-function deletePhoto(index) {
-    photos.splice(index, 1);
-    renderQueue();
-}
-
-function renderQueue() {
-    const box = document.getElementById('queueBox');
-    box.innerHTML = '';
-    photos.forEach((base64String, i) => {
-        box.innerHTML += `
-            <div class="thumb" style="background-image: url('${base64String}')">
-                <button class="thumb-del" onclick="deletePhoto(${i})">X</button>
-            </div>`;
-    });
-    document.getElementById('fotoCount').innerText = `${photos.length} FOTO${photos.length !== 1 ? 'S' : ''} LISTA${photos.length !== 1 ? 'S' : ''}`;
-    document.getElementById('btnPhotos').disabled = photos.length === 0;
-}
-
-async function handleGenerateQuestions() {
-    goToScreen(5);
-    const box = document.getElementById('resultsBox');
-    box.innerHTML = '';
-    showLoading(true);
-    
-    // CASO A: Si el usuario marcó "Ejercicios Gráficos (IA)" (Matemáticas / Geometría con Meta Muse)
-    if (selectedTypes.includes('Ejercicios Gráficos (IA)')) {
-        showLoading(false);
+        let currentLevel = null; // Primaria o Secundaria
+        let currentGrade = null; // Ej: "3° Secundaria"
+        let photos = []; 
+        let tutorPhotos = []; // Fotos exclusivas para la revisión
+        let selectedTypes = [];
+        let generatedQuestionsData = null; 
+        let topicsToReinforce = []; // Temas débiles para examen de refuerzo
         
-        const imgBox = document.createElement('div');
-        imgBox.id = 'muse-image-container';
-        imgBox.innerHTML = `
-            <div style="text-align:center; padding:30px; background:#fffbf0; border:3px dashed var(--primary); border-radius:16px; margin-bottom:20px;">
-                <div class="spinner" style="width:50px; height:50px; margin: 0 auto 15px auto; border-width:6px;"></div>
-                <h3 style="color:var(--primary); margin-bottom: 5px;">Meta Muse está creando tu lámina gráfica...</h3>
-                <p style="color:var(--text-muted); font-size:1rem;">Generando problemas visuales y clave recortable inferior. Esto toma unos segundos.</p>
-            </div>`;
-        box.appendChild(imgBox);
-        
-        try {
-            const response = await fetch('/api/generate-image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    images: photos, 
-                    grade: currentGrade,
-                    questionTypes: selectedTypes 
-                })
-            });
+        const canvas = document.getElementById('canvasElement');
+        let stream = null;
+
+        function showLoading(show, title = "¡La magia de TUKUS está trabajando!", desc = "Por favor, espera un momentito...") {
+            document.getElementById('loadingTitle').innerText = title;
+            document.getElementById('loadingDesc').innerText = desc;
+            document.getElementById('loadingOverlay').classList.toggle('active', show);
+        }
+
+        function goToScreen(num) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen' + num).classList.add('active');
             
-            const imgData = await response.json();
-            
-            if (response.ok && imgData.success && imgData.imageUrl) {
-                // Indicador estructurado para identificar que es un PDF basado en la lámina de Muse
-                generatedQuestionsData = { isGraphicSheet: true, imageUrl: imgData.imageUrl };
-                
-                imgBox.innerHTML = `
-                    <div style="text-align:center; margin-bottom: 25px;">
-                        <p style="color: var(--accent-green); font-weight: bold; margin-bottom: 12px; font-size: 1.1rem;">✨ ¡Lámina gráfica lista para imprimir y recortar!</p>
-                        <img src="${imgData.imageUrl}" style="max-width: 100%; border-radius: 16px; border: 4px solid var(--primary); box-shadow: 0 6px 15px rgba(0,0,0,0.15);">
-                    </div>`;
+            const header = document.getElementById('mainHeader');
+            if(num === 3 || num === 6) {
+                header.style.display = 'none';
             } else {
-                imgBox.innerHTML = `<div style="text-align:center; padding:20px; background:#fef2f2; border-radius:12px;"><span style="color:#ef4444; font-weight:bold; font-size:1.1rem;">❌ Error al generar la lámina: ${imgData.message || 'Desconocido'}</span></div>`;
+                header.style.display = 'flex';
             }
-        } catch (err) {
-            console.error(err);
-            imgBox.innerHTML = `<div style="text-align:center; padding:20px; background:#fef2f2; border-radius:12px;"><span style="color:#ef4444; font-weight:bold; font-size:1.1rem;">❌ Error de conexión al conectar con Meta Muse.</span></div>`;
-        }
-        return; 
-    }
 
-    // CASO B: Flujo tradicional de preguntas de texto (Teoría / Letras)
-    try {
-        const response = await fetch('/api/generate-questions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ images: photos, grade: currentGrade, questionTypes: selectedTypes })
-        });
-        
-        const data = await response.json();
-        showLoading(false);
-        
-        if (response.ok && data.success && data.questions) {
-            generatedQuestionsData = data.questions; 
-            renderQuestions(data.questions);
-        } else {
-            box.innerHTML = `<h3 style="color:red;">Ups! Algo salió mal:</h3><p>${data.message}</p>`;
-        }
-    } catch(err) {
-        console.error(err);
-        box.innerHTML = '<h3 style="color:red;">No hay internet 📶</h3><p>Revisa tu conexión y vuelve a intentar.</p>';
-        showLoading(false);
-    } 
-}
-        
-function renderQuestions(questions) {
-    const box = document.getElementById('resultsBox');
-
-    questions.forEach(q => {
-        let optionsHtml = '';
-        if (q.options && q.options.length > 0) {
-            optionsHtml = `<ul style="margin-left:20px; font-size:1.1rem; color:var(--text-muted); list-style-type: none; padding-top: 5px;">
-                ${q.options.map((opt, i) => `<li style="margin-bottom: 5px;"><strong>${['A','B','C','D'][i]})</strong> ${opt}</li>`).join('')}
-            </ul>`;
-        }
-        
-        box.innerHTML += `
-            <div class="question-item" style="margin-bottom: 25px;">
-                <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span style="font-size: 1.1rem;">${q.statement}</span>
-                <br><small style="color:var(--accent-blue); font-weight:bold;">[${q.type}]</small>
-                ${optionsHtml}
-            </div>
-        `;
-    });
-}
-
-// Función auxiliar para convertir URLs externas a Base64 y usarlas en PDF
-const getBase64ImageFromUrl = (url) => {
-    return new Promise((resolve, reject) => {
-        let img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = () => {
-            let canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            let ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL('image/jpeg'));
-        };
-        img.onerror = reject;
-        img.src = url;
-    });
-};
-
-async function exportQuestionsPDF() {
-    if(!generatedQuestionsData) return;
-    showLoading(true);
-    
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    // Si es la lámina gráfica de Meta Muse
-    if (!Array.isArray(generatedQuestionsData) && generatedQuestionsData.isGraphicSheet) {
-        try {
-            const base64Img = await getBase64ImageFromUrl(generatedQuestionsData.imageUrl);
+            document.getElementById('btnHome').style.display = num > 1 ? 'block' : 'none';
             
+            if(num === 1) resetApp();
+            if(num === 3) startCamera('videoElement');
+            if(num === 6) startCamera('videoElementTutor');
+        }
+
+        function resetApp() {
+            currentLevel = null;
+            currentGrade = null;
+            photos = [];
+            tutorPhotos = [];
+            selectedTypes = [];
+            generatedQuestionsData = null;
+            topicsToReinforce = [];
+            
+            document.querySelectorAll('.level-opt, .grade-opt, .type-opt').forEach(el => el.classList.remove('selected'));
+            document.getElementById('gradesPrimaria').style.display = 'none';
+            document.getElementById('gradesSecundaria').style.display = 'none';
+            document.getElementById('btnGrade').disabled = true;
+            document.getElementById('btnPhotos').disabled = true;
+            document.getElementById('btnEvaluate').disabled = true;
+            document.getElementById('btnGenerate').disabled = true;
+            
+            renderQueue('photos');
+            renderQueue('tutorPhotos');
+            document.getElementById('resultsBox').innerHTML = '';
+        }
+
+        // Selección de Menú y Submenú
+        function selectLevel(level, el) {
+            document.querySelectorAll('.level-opt').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+            currentLevel = level;
+            
+            document.getElementById('gradesPrimaria').style.display = level === 'Primaria' ? 'grid' : 'none';
+            document.getElementById('gradesSecundaria').style.display = level === 'Secundaria' ? 'grid' : 'none';
+            
+            currentGrade = null;
+            document.querySelectorAll('.grade-opt').forEach(e => e.classList.remove('selected'));
+            document.getElementById('btnGrade').disabled = true;
+        }
+
+        function selectGradeNum(fullGradeName, el) {
+            document.querySelectorAll('.grade-opt').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+            currentGrade = fullGradeName; // Ej: "3° Secundaria"
+            document.getElementById('btnGrade').disabled = false;
+        }
+
+        function toggleType(type, el) {
+            const idx = selectedTypes.indexOf(type);
+            if(idx > -1) {
+                selectedTypes.splice(idx, 1);
+                el.classList.remove('selected');
+            } else {
+                selectedTypes.push(type);
+                el.classList.add('selected');
+            }
+            document.getElementById('btnGenerate').disabled = selectedTypes.length === 0;
+        }
+
+        async function startCamera(videoId) {
+            const videoObj = document.getElementById(videoId);
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                videoObj.srcObject = stream;
+            } catch (err) {
+                alert("No se pudo iniciar la cámara automáticamente.");
+            }
+        }
+      
+        function stopCamera() {
+            if (stream) stream.getTracks().forEach(track => track.stop());
+        }
+
+        function takePhotoAndProcess(targetArrayName) {
+            if (!stream) return alert("Cámara no iniciada.");
+            showLoading(true);
+
+            // Determina de qué video tomar la foto
+            const videoEl = targetArrayName === 'photos' ? document.getElementById('videoElement') : document.getElementById('videoElementTutor');
+            const targetArray = targetArrayName === 'photos' ? photos : tutorPhotos;
+
+            const MAX_WIDTH = 1280; 
+            let scale = 1;
+            if (videoEl.videoWidth > MAX_WIDTH) scale = MAX_WIDTH / videoEl.videoWidth;
+            
+            canvas.width = videoEl.videoWidth * scale;
+            canvas.height = videoEl.videoHeight * scale;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.filter = 'contrast(150%) grayscale(100%) brightness(110%)';
+            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+            
+            const processedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+            targetArray.push(processedBase64);
+            
+            renderQueue(targetArrayName);
+            setTimeout(() => { showLoading(false); }, 400); 
+        }
+
+        function deletePhoto(index, targetArrayName) {
+            if (targetArrayName === 'photos') photos.splice(index, 1);
+            else tutorPhotos.splice(index, 1);
+            renderQueue(targetArrayName);
+        }
+
+        function renderQueue(targetArrayName) {
+            const isTutor = targetArrayName === 'tutorPhotos';
+            const arr = isTutor ? tutorPhotos : photos;
+            const boxId = isTutor ? 'queueBoxTutor' : 'queueBox';
+            const countId = isTutor ? 'fotoCountTutor' : 'fotoCount';
+            const btnId = isTutor ? 'btnEvaluate' : 'btnPhotos';
+
+            const box = document.getElementById(boxId);
+            box.innerHTML = '';
+            arr.forEach((base64String, i) => {
+                box.innerHTML += `
+                    <div class="thumb" style="background-image: url('${base64String}')">
+                        <button class="thumb-del" onclick="deletePhoto(${i}, '${targetArrayName}')">X</button>
+                    </div>`;
+            });
+            document.getElementById(countId).innerText = `${arr.length} FOTO${arr.length !== 1 ? 'S' : ''} LISTA${arr.length !== 1 ? 'S' : ''}`;
+            document.getElementById(btnId).disabled = arr.length === 0;
+        }
+
+        // Generación de Preguntas
+        async function handleGenerateQuestions(isRefuerzo = false) {
+            goToScreen(5);
+            const box = document.getElementById('resultsBox');
+            box.innerHTML = '';
+            
+            showLoading(true, "Creando Examen TUKUS", "Analizando apuntes...");
+
+            // payload especial si es refuerzo
+            const payload = { 
+                images: photos, 
+                grade: currentGrade, 
+                questionTypes: selectedTypes,
+                isRefuerzo: isRefuerzo,
+                topicsToReinforce: isRefuerzo ? topicsToReinforce : []
+            };
+            
+            if (selectedTypes.includes('Ejercicios Gráficos (IA)')) {
+                showLoading(false); 
+                
+                const imgBox = document.createElement('div');
+                imgBox.id = 'muse-image-container';
+                imgBox.innerHTML = `
+                    <div style="text-align:center; padding:30px; background:#fffbf0; border:3px dashed var(--primary); border-radius:16px; margin-bottom:20px;">
+                        <div class="spinner" style="width:50px; height:50px; margin: 0 auto 15px auto; border-width:6px;"></div>
+                        <h3 style="color:var(--primary); margin-bottom: 5px;">TUKUS está creando tu lámina...</h3>
+                        <p style="color:var(--text-muted); font-size:1rem;">Generando problemas visuales y clave recortable inferior.</p>
+                    </div>`;
+                box.appendChild(imgBox);
+                
+                try {
+                    const response = await fetch('/api/generate-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    const imgData = await response.json();
+                    
+                    if (response.ok && imgData.success && imgData.imageUrl) {
+                        generatedQuestionsData = { isGraphicSheet: true, imageUrl: imgData.imageUrl };
+                        imgBox.innerHTML = `
+                            <div style="text-align:center; margin-bottom: 25px;">
+                                <p style="color: var(--accent-green); font-weight: bold; margin-bottom: 12px; font-size: 1.1rem;">✨ ¡Lámina TUKUS lista para imprimir y recortar!</p>
+                                <img src="${imgData.imageUrl}" style="max-width: 100%; border-radius: 16px; border: 4px solid var(--primary); box-shadow: 0 6px 15px rgba(0,0,0,0.15);">
+                            </div>`;
+                    } else {
+                        imgBox.innerHTML = `<div style="text-align:center; padding:20px; background:#fef2f2; border-radius:12px;"><span style="color:#ef4444; font-weight:bold;">❌ Error al generar la lámina.</span></div>`;
+                    }
+                } catch (err) {
+                    imgBox.innerHTML = `<div style="text-align:center; padding:20px; background:#fef2f2; border-radius:12px;"><span style="color:#ef4444; font-weight:bold;">❌ Error de conexión al conectar con IA.</span></div>`;
+                }
+                return; 
+            }
+
+            // Flujo normal de texto
+            try {
+                const response = await fetch('/api/generate-questions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                showLoading(false);
+                
+                if (response.ok && data.success && data.questions) {
+                    generatedQuestionsData = data.questions; 
+                    renderQuestions(data.questions);
+                } else {
+                    box.innerHTML = `<h3 style="color:red;">Ups! Algo salió mal:</h3><p>${data.message}</p>`;
+                }
+            } catch(err) {
+                box.innerHTML = '<h3 style="color:red;">No hay internet 📶</h3>';
+                showLoading(false);
+            } 
+        }
+
+        function renderQuestions(questions) {
+            const box = document.getElementById('resultsBox');
+            questions.forEach(q => {
+                let optionsHtml = '';
+                if (q.options && q.options.length > 0) {
+                    optionsHtml = `<ul style="margin-left:20px; font-size:1.1rem; color:var(--text-muted); list-style-type: none; padding-top: 5px;">
+                        ${q.options.map((opt, i) => `<li style="margin-bottom: 5px;"><strong>${['A','B','C','D'][i]})</strong> ${opt}</li>`).join('')}
+                    </ul>`;
+                }
+                box.innerHTML += `
+                    <div class="question-item">
+                        <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span>${q.statement}</span>
+                        <br><small style="color:var(--accent-blue); font-weight:bold;">[${q.type}]</small>
+                        ${optionsHtml}
+                    </div>`;
+            });
+        }
+
+        // TUKUS TUTOR FLOW
+        function startTutorReview() {
+            tutorPhotos = []; // Reiniciamos fotos del tutor
+            renderQueue('tutorPhotos');
+            goToScreen(6);
+        }
+
+        async function handleTutorReview() {
+            goToScreen(7);
+            const box = document.getElementById('tutorResultsBox');
+            const btns = document.getElementById('tutorActionButtons');
+            box.innerHTML = '';
+            btns.innerHTML = '';
+            
+            showLoading(true, "TUKUS Tutor Evaluando", "Calificando respuestas...");
+
+            try {
+                // Endpoint nuevo que deberás crear en tu backend
+                const response = await fetch('/api/evaluate-exam', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        examImages: tutorPhotos, 
+                        originalQuestions: generatedQuestionsData 
+                    })
+                });
+                const data = await response.json();
+                showLoading(false);
+
+                if (response.ok && data.success) {
+                    box.innerHTML = `
+                        <h3 style="color: var(--primary); text-align: center;">Calificación: ${data.score}/100</h3>
+                        <p style="font-size: 1.1rem; margin-top: 15px;">${data.analysisText}</p>
+                    `;
+                    
+                    if (data.needsReinforcement) {
+                        topicsToReinforce = data.weakTopics; // Guardamos temas débiles devueltos por IA
+                        box.innerHTML += `<div style="margin-top:15px; padding:10px; background:#fff3e0; border-left: 4px solid var(--primary);"><strong style="color:var(--primary);">Puntos a reforzar:</strong><br>${topicsToReinforce.join(', ')}</div>`;
+                        
+                        btns.innerHTML = `
+                            <button class="btn btn-primary" style="width: 100%;" onclick="handleGenerateQuestions(true)">🔥 Generar Examen de Refuerzo</button>
+                            <button class="btn btn-outline" style="width: 100%;" onclick="goToScreen(1)">🏠 Volver al Inicio</button>
+                        `;
+                    } else {
+                        box.innerHTML += `<p style="margin-top:15px; color:var(--accent-green); font-weight:bold; text-align:center;">¡Ya está listo para el examen! 🎉</p>`;
+                        btns.innerHTML = `<button class="btn btn-primary" style="width: 100%;" onclick="goToScreen(1)">🏠 Volver al Inicio</button>`;
+                    }
+                } else {
+                    box.innerHTML = `<p style="color:red;">Error del tutor: ${data.message}</p>`;
+                    btns.innerHTML = `<button class="btn btn-outline" onclick="goToScreen(1)">Volver</button>`;
+                }
+            } catch(e) {
+                showLoading(false);
+                box.innerHTML = `<p style="color:red;">Fallo de conexión con TUKUS Tutor.</p>`;
+                btns.innerHTML = `<button class="btn btn-outline" onclick="goToScreen(1)">Volver</button>`;
+            }
+        }
+
+        // PDF EXPORT (Ajustado a 1 página)
+        const getBase64ImageFromUrl = (url) => {
+            return new Promise((resolve, reject) => {
+                let img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    let canvas = document.createElement('canvas');
+                    canvas.width = img.width; canvas.height = img.height;
+                    let ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/jpeg'));
+                };
+                img.onerror = reject; img.src = url;
+            });
+        };
+
+        async function exportQuestionsPDF() {
+            if(!generatedQuestionsData) return;
+            showLoading(true, "Generando PDF", "Preparando archivo...");
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            if (!Array.isArray(generatedQuestionsData) && generatedQuestionsData.isGraphicSheet) {
+                try {
+                    const base64Img = await getBase64ImageFromUrl(generatedQuestionsData.imageUrl);
+                    doc.setFontSize(16);
+                    doc.setTextColor(242, 138, 63);
+                    doc.text(`TUKUS - Lámina Gráfica (${currentGrade})`, 105, 15, null, null, "center");
+                    doc.addImage(base64Img, 'JPEG', 15, 20, 180, 250);
+                    doc.save("TUKUS_Lamina_Grafica.pdf");
+                } catch (e) {
+                    alert("Error descargando imagen PDF.");
+                }
+                showLoading(false);
+                return;
+            }
+
+            // Examen de texto comprimido para 1 página
             doc.setFontSize(18);
             doc.setTextColor(242, 138, 63);
-            doc.text(`TUKU - Lámina Gráfica de Matemáticas (${currentGrade}° Primaria)`, 105, 15, null, null, "center");
+            doc.text("EXAMEN TUKUS", 105, 15, null, null, "center");
             
-            // Ajustamos la imagen a lo largo de la página PDF de forma limpia
-            doc.addImage(base64Img, 'JPEG', 15, 25, 180, 240);
-            doc.save("TUKU_Lamina_Grafica_Matematicas.pdf");
-        } catch (e) {
-            console.error("Error al incrustar la lámina gráfica en el PDF:", e);
-            alert("No se pudo descargar la imagen para el PDF. Intenta nuevamente.");
-        }
-        showLoading(false);
-        return;
-    }
-
-    // Si es el examen tradicional de preguntas de texto
-    doc.setFontSize(22);
-    doc.setTextColor(242, 138, 63);
-    doc.text("EXAMEN TUKU", 105, 20, null, null, "center");
-    
-    doc.setFontSize(12);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Nombre: _________________________   Grado: ${currentGrade}° Primaria`, 20, 35);
-    
-    doc.setLineWidth(0.5);
-    doc.line(20, 40, 190, 40);
-    
-    doc.setTextColor(30, 41, 59);
-    let y = 55;
-    
-    for (let index = 0; index < generatedQuestionsData.length; index++) {
-        const q = generatedQuestionsData[index];
-        
-        if(y > 250) {
-            doc.addPage();
-            y = 20;
-        }
-        
-        doc.setFont(undefined, 'bold');
-        const titleStr = `${index + 1}. ${q.statement}`;
-        const splitTitle = doc.splitTextToSize(titleStr, 170);
-        doc.text(splitTitle, 20, y);
-        doc.setFont(undefined, 'normal');
-        y += (splitTitle.length * 7) + 2;
-        
-        if (q.type === 'Opción Múltiple' && q.options) {
-            const letters = ['a)', 'b)', 'c)', 'd)'];
-            q.options.forEach((opt, i) => {
+            doc.setFontSize(10);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Nombre: _______________________________   Grado: ${currentGrade}`, 15, 25);
+            doc.setLineWidth(0.5);
+            doc.line(15, 28, 195, 28);
+            
+            doc.setTextColor(30, 41, 59);
+            let y = 35;
+            
+            for (let index = 0; index < generatedQuestionsData.length; index++) {
+                const q = generatedQuestionsData[index];
                 if(y > 280) { doc.addPage(); y = 20; }
-                doc.text(`${letters[i]} ${opt}`, 25, y);
-                y += 8;
+                
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                const titleStr = `${index + 1}. ${q.statement}`;
+                const splitTitle = doc.splitTextToSize(titleStr, 180);
+                doc.text(splitTitle, 15, y);
+                doc.setFont(undefined, 'normal');
+                y += (splitTitle.length * 5) + 1;
+                
+                if (q.type === 'Opción Múltiple' && q.options) {
+                    const letters = ['a)', 'b)', 'c)', 'd)'];
+                    let xOffset = 20;
+                    // Imprimir opciones en 2 columnas para ahorrar espacio vertical
+                    q.options.forEach((opt, i) => {
+                        doc.text(`${letters[i]} ${opt}`, xOffset, y);
+                        xOffset += 85; 
+                        if ((i + 1) % 2 === 0) { y += 5; xOffset = 20; } // salto de línea cada 2
+                    });
+                    if (q.options.length % 2 !== 0) y += 5;
+                    y += 3;
+                } else if (q.type === 'Verdadero / Falso') {
+                    doc.text("(   ) Verdadero       (   ) Falso", 20, y);
+                    y += 8;
+                } else {
+                    doc.line(15, y+2, 195, y+2);
+                    y += 9;
+                }
+            }
+            
+            doc.save("TUKUS_Examen_Alumno.pdf");
+            showLoading(false);
+        }
+
+        function exportAnswersPDF() {
+            if(!generatedQuestionsData || generatedQuestionsData.isGraphicSheet) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(16);
+            doc.setTextColor(244, 67, 54);
+            doc.text("TUKUS - HOJA DE RESULTADOS (Tutor)", 105, 15, null, null, "center");
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Grado: ${currentGrade}`, 15, 25);
+            doc.setLineWidth(0.5);
+            doc.line(15, 28, 195, 28);
+            
+            doc.setTextColor(30, 41, 59);
+            let y = 35;
+            
+            generatedQuestionsData.forEach((q, index) => {
+                if(y > 280) { doc.addPage(); y = 20; }
+                const shortStatement = q.statement.length > 80 ? q.statement.substring(0, 80) + "..." : q.statement;
+                doc.setFont(undefined, 'bold');
+                doc.text(`${index + 1}. ${shortStatement}`, 15, y);
+                y += 5;
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(76, 175, 80); 
+                const splitAnswer = doc.splitTextToSize(`Rpta: ${q.answer}`, 170);
+                doc.text(splitAnswer, 20, y);
+                doc.setTextColor(30, 41, 59); 
+                y += (splitAnswer.length * 5) + 5;
             });
-            y += 5;
-        } else if (q.type === 'Verdadero / Falso') {
-            doc.text("(   ) Verdadero       (   ) Falso", 25, y);
-            y += 12;
-        } else {
-            doc.line(20, y, 190, y);
-            y += 10;
-            doc.line(20, y, 190, y);
-            y += 15;
+            doc.save("TUKUS_Resultados.pdf");
         }
-    }
-    
-    doc.save("TUKU_Examen_Alumno.pdf");
-    showLoading(false);
-}
-function exportAnswersPDF() {
-    if(!generatedQuestionsData) return;
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    doc.setFontSize(18);
-    doc.setTextColor(244, 67, 54);
-    doc.text("TUKU - HOJA DE RESPUESTAS (Maestro)", 105, 20, null, null, "center");
-    
-    doc.setFontSize(12);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Grado: ${currentGrade}° Primaria`, 20, 30);
-    
-    doc.setLineWidth(0.5);
-    doc.line(20, 35, 190, 35);
-    
-    doc.setTextColor(30, 41, 59);
-    let y = 45;
-    
-    generatedQuestionsData.forEach((q, index) => {
-        if(y > 270) {
-            doc.addPage();
-            y = 20;
-        }
-        
-        const shortStatement = q.statement.length > 70 ? q.statement.substring(0, 70) + "..." : q.statement;
-        doc.setFont(undefined, 'bold');
-        doc.text(`${index + 1}. ${shortStatement}`, 20, y);
-        y += 7;
-        
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(76, 175, 80); 
-        const splitAnswer = doc.splitTextToSize(`Rpta: ${q.answer}`, 160);
-        doc.text(splitAnswer, 30, y);
-        
-        doc.setTextColor(30, 41, 59); 
-        y += (splitAnswer.length * 7) + 8;
-    });
-    
-    doc.save("TUKU_Clave_Respuestas.pdf");
-}
     </script>
 </body>
 </html>
