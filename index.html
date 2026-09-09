@@ -550,9 +550,9 @@ async function handleGenerateQuestions() {
     box.innerHTML = '';
     showLoading(true);
     
-    // CASO A: Si el usuario marcó "Ejercicios Gráficos (IA)" (Matemáticas / Geometría)
+    // CASO A: Si el usuario marcó "Ejercicios Gráficos (IA)" (Matemáticas / Geometría con Meta Muse)
     if (selectedTypes.includes('Ejercicios Gráficos (IA)')) {
-        showLoading(false); // Ocultamos el loader general para mostrar la caja de carga asíncrona
+        showLoading(false);
         
         const imgBox = document.createElement('div');
         imgBox.id = 'muse-image-container';
@@ -560,11 +560,10 @@ async function handleGenerateQuestions() {
             <div style="text-align:center; padding:30px; background:#fffbf0; border:3px dashed var(--primary); border-radius:16px; margin-bottom:20px;">
                 <div class="spinner" style="width:50px; height:50px; margin: 0 auto 15px auto; border-width:6px;"></div>
                 <h3 style="color:var(--primary); margin-bottom: 5px;">Meta Muse está creando tu lámina gráfica...</h3>
-                <p style="color:var(--text-muted); font-size:1rem;">Generando problemas visuales de geometría/matemáticas y clave recortable inferior. Esto toma unos segundos.</p>
+                <p style="color:var(--text-muted); font-size:1rem;">Generando problemas visuales y clave recortable inferior. Esto toma unos segundos.</p>
             </div>`;
         box.appendChild(imgBox);
         
-        // Llamada directa a Meta Muse pasándole las fotos escaneadas y el grado
         try {
             const response = await fetch('/api/generate-image', {
                 method: 'POST',
@@ -579,8 +578,8 @@ async function handleGenerateQuestions() {
             const imgData = await response.json();
             
             if (response.ok && imgData.success && imgData.imageUrl) {
-                // Guardamos una referencia para que los botones de PDF sepan que hay una lámina gráfica
-                generatedQuestionsData = [{ isGraphicSheet: true, imageUrl: imgData.imageUrl }];
+                // Indicador estructurado para identificar que es un PDF basado en la lámina de Muse
+                generatedQuestionsData = { isGraphicSheet: true, imageUrl: imgData.imageUrl };
                 
                 imgBox.innerHTML = `
                     <div style="text-align:center; margin-bottom: 25px;">
@@ -594,7 +593,7 @@ async function handleGenerateQuestions() {
             console.error(err);
             imgBox.innerHTML = `<div style="text-align:center; padding:20px; background:#fef2f2; border-radius:12px;"><span style="color:#ef4444; font-weight:bold; font-size:1.1rem;">❌ Error de conexión al conectar con Meta Muse.</span></div>`;
         }
-        return; // Detenemos el flujo para que no llame a generate-questions
+        return; 
     }
 
     // CASO B: Flujo tradicional de preguntas de texto (Teoría / Letras)
@@ -620,6 +619,7 @@ async function handleGenerateQuestions() {
         showLoading(false);
     } 
 }
+        
 function renderQuestions(questions) {
     const box = document.getElementById('resultsBox');
 
@@ -665,7 +665,28 @@ async function exportQuestionsPDF() {
     
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    
+
+    // Si es la lámina gráfica de Meta Muse
+    if (!Array.isArray(generatedQuestionsData) && generatedQuestionsData.isGraphicSheet) {
+        try {
+            const base64Img = await getBase64ImageFromUrl(generatedQuestionsData.imageUrl);
+            
+            doc.setFontSize(18);
+            doc.setTextColor(242, 138, 63);
+            doc.text(`TUKU - Lámina Gráfica de Matemáticas (${currentGrade}° Primaria)`, 105, 15, null, null, "center");
+            
+            // Ajustamos la imagen a lo largo de la página PDF de forma limpia
+            doc.addImage(base64Img, 'JPEG', 15, 25, 180, 240);
+            doc.save("TUKU_Lamina_Grafica_Matematicas.pdf");
+        } catch (e) {
+            console.error("Error al incrustar la lámina gráfica en el PDF:", e);
+            alert("No se pudo descargar la imagen para el PDF. Intenta nuevamente.");
+        }
+        showLoading(false);
+        return;
+    }
+
+    // Si es el examen tradicional de preguntas de texto
     doc.setFontSize(22);
     doc.setTextColor(242, 138, 63);
     doc.text("EXAMEN TUKU", 105, 20, null, null, "center");
@@ -717,7 +738,6 @@ async function exportQuestionsPDF() {
     doc.save("TUKU_Examen_Alumno.pdf");
     showLoading(false);
 }
-
 function exportAnswersPDF() {
     if(!generatedQuestionsData) return;
     const { jsPDF } = window.jspdf;
