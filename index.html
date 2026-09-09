@@ -550,6 +550,54 @@ async function handleGenerateQuestions() {
     box.innerHTML = '';
     showLoading(true);
     
+    // CASO A: Si el usuario marcó "Ejercicios Gráficos (IA)" (Matemáticas / Geometría)
+    if (selectedTypes.includes('Ejercicios Gráficos (IA)')) {
+        showLoading(false); // Ocultamos el loader general para mostrar la caja de carga asíncrona
+        
+        const imgBox = document.createElement('div');
+        imgBox.id = 'muse-image-container';
+        imgBox.innerHTML = `
+            <div style="text-align:center; padding:30px; background:#fffbf0; border:3px dashed var(--primary); border-radius:16px; margin-bottom:20px;">
+                <div class="spinner" style="width:50px; height:50px; margin: 0 auto 15px auto; border-width:6px;"></div>
+                <h3 style="color:var(--primary); margin-bottom: 5px;">Meta Muse está creando tu lámina gráfica...</h3>
+                <p style="color:var(--text-muted); font-size:1rem;">Generando problemas visuales de geometría/matemáticas y clave recortable inferior. Esto toma unos segundos.</p>
+            </div>`;
+        box.appendChild(imgBox);
+        
+        // Llamada directa a Meta Muse pasándole las fotos escaneadas y el grado
+        try {
+            const response = await fetch('/api/generate-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    images: photos, 
+                    grade: currentGrade,
+                    questionTypes: selectedTypes 
+                })
+            });
+            
+            const imgData = await response.json();
+            
+            if (response.ok && imgData.success && imgData.imageUrl) {
+                // Guardamos una referencia para que los botones de PDF sepan que hay una lámina gráfica
+                generatedQuestionsData = [{ isGraphicSheet: true, imageUrl: imgData.imageUrl }];
+                
+                imgBox.innerHTML = `
+                    <div style="text-align:center; margin-bottom: 25px;">
+                        <p style="color: var(--accent-green); font-weight: bold; margin-bottom: 12px; font-size: 1.1rem;">✨ ¡Lámina gráfica lista para imprimir y recortar!</p>
+                        <img src="${imgData.imageUrl}" style="max-width: 100%; border-radius: 16px; border: 4px solid var(--primary); box-shadow: 0 6px 15px rgba(0,0,0,0.15);">
+                    </div>`;
+            } else {
+                imgBox.innerHTML = `<div style="text-align:center; padding:20px; background:#fef2f2; border-radius:12px;"><span style="color:#ef4444; font-weight:bold; font-size:1.1rem;">❌ Error al generar la lámina: ${imgData.message || 'Desconocido'}</span></div>`;
+            }
+        } catch (err) {
+            console.error(err);
+            imgBox.innerHTML = `<div style="text-align:center; padding:20px; background:#fef2f2; border-radius:12px;"><span style="color:#ef4444; font-weight:bold; font-size:1.1rem;">❌ Error de conexión al conectar con Meta Muse.</span></div>`;
+        }
+        return; // Detenemos el flujo para que no llame a generate-questions
+    }
+
+    // CASO B: Flujo tradicional de preguntas de texto (Teoría / Letras)
     try {
         const response = await fetch('/api/generate-questions', {
             method: 'POST',
@@ -558,42 +606,12 @@ async function handleGenerateQuestions() {
         });
         
         const data = await response.json();
+        showLoading(false);
         
         if (response.ok && data.success && data.questions) {
             generatedQuestionsData = data.questions; 
-            
-            // 1. Si pidieron gráficos, llamamos a Meta Muse y preparamos el contenedor visual
-            if (selectedTypes.includes('Ejercicios Gráficos (IA)')) {
-                const imgBox = document.createElement('div');
-                imgBox.id = 'muse-image-container';
-                imgBox.innerHTML = '<div style="text-align:center; padding:20px; background:#f8fafc; border:2px dashed #cbd5e1; border-radius:12px; margin-bottom:25px;"><span style="color:#64748b; font-weight:bold;">🎨 Meta Muse está dibujando tu lámina de ejercicios...</span></div>';
-                box.appendChild(imgBox);
-                
-                fetch('/api/generate-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        images: photos, 
-                        questionsData: data.questions, 
-                        grade: currentGrade 
-                    })
-                }).then(res => res.json()).then(imgData => {
-                    if (imgData.success && imgData.imageUrl) {
-                        imgBox.innerHTML = `<div style="text-align:center; margin-bottom: 25px;"><img src="${imgData.imageUrl}" style="max-width: 100%; border-radius: 12px; border: 4px solid var(--accent-blue); box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></div>`;
-                    } else {
-                        imgBox.innerHTML = `<div style="text-align:center; padding:10px; margin-bottom:25px;"><span style="color:#ef4444;">❌ Gráfico no disponible: ${imgData.message}</span></div>`;
-                    }
-                }).catch(err => {
-                    imgBox.innerHTML = `<div style="text-align:center; padding:10px; margin-bottom:25px;"><span style="color:#ef4444;">❌ Error de conexión al generar gráfico.</span></div>`;
-                });
-            }
-
-            // 2. Renderizamos las preguntas de texto debajo
             renderQuestions(data.questions);
-            showLoading(false);
-
         } else {
-            showLoading(false);
             box.innerHTML = `<h3 style="color:red;">Ups! Algo salió mal:</h3><p>${data.message}</p>`;
         }
     } catch(err) {
@@ -602,7 +620,6 @@ async function handleGenerateQuestions() {
         showLoading(false);
     } 
 }
-
 function renderQuestions(questions) {
     const box = document.getElementById('resultsBox');
 
