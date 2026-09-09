@@ -585,15 +585,6 @@
                     </ul>`;
                 }
                 
-                // Contenedor visual opcional para peticiones de gráficos
-                let imageHtml = '';
-                if (q.imagePrompt && q.imagePrompt !== "null" && q.imagePrompt.trim() !== "") {
-                    imageHtml = `
-                    <div id="img-container-${q.id}" style="text-align: center; margin: 15px 0; padding: 15px; background: #f8fafc; border-radius: 12px; border: 2px dashed #cbd5e1;">
-                        <span style="color: #64748b; font-size: 0.9rem;">⏳ Creando gráfico del ejercicio...</span>
-                    </div>`;
-                }
-                
                 box.innerHTML += `
                     <div class="question-item" style="margin-bottom: 25px;">
                         <strong style="font-size: 1.1rem;">Pregunta ${q.id}:</strong> <span style="font-size: 1.1rem;">${q.statement}</span>
