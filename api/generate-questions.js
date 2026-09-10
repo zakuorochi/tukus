@@ -28,7 +28,7 @@ export default async function handler(req, res) {
             }
         }));
 
-        // Lógica condicional para enfocar el examen en refuerzo si el tutor lo requiere
+        // 1. Lógica de Refuerzo
         let promptFocus = "";
         if (isRefuerzo && topicsToReinforce && topicsToReinforce.length > 0) {
             promptFocus = `
@@ -40,10 +40,25 @@ export default async function handler(req, res) {
             promptFocus = `Analiza las fotos de los apuntes adjuntos y genera 10 preguntas evaluativas.`;
         }
 
+        // 2. Lógica estricta de Nivel Académico (Primaria vs Secundaria)
+        const isSecundaria = grade.toLowerCase().includes("secundaria");
+        const levelContext = isSecundaria 
+            ? `NIVEL COGNITIVO: EDUCACIÓN SECUNDARIA (Jóvenes de 12 a 16 años).
+               - Exige razonamiento abstracto, pensamiento crítico y análisis profundo.
+               - Usa lenguaje académico formal, NADA de tono infantil.
+               - Los problemas deben requerir deducción lógica, no solo memoria básica.`
+            : `NIVEL COGNITIVO: EDUCACIÓN PRIMARIA (Niños de 6 a 11 años).
+               - Exige conocimientos fundamentales, concretos y directos.
+               - Usa lenguaje sencillo, amigable y muy claro.
+               - Los problemas deben ser fáciles de entender y visualizables, sin conceptos demasiado abstractos.`;
+
         const promptText = `
         Eres un pedagogo experto. ${promptFocus}
         Primero, clasifica el tema principal en: "CIENCIAS_MATEMATICAS" o "LETRAS_HUMANIDADES".
-        Genera 10 preguntas evaluativas para un estudiante de ${grade}.
+        
+        Genera 10 preguntas evaluativas adaptadas estrictamente para el grado: ${grade}.
+        ${levelContext}
+
         Tipos de pregunta requeridos: ${questionTypes.join(', ')}.
 
         Devuelve un objeto JSON con esta estructura exacta sin caracteres Markdown:
@@ -61,7 +76,7 @@ export default async function handler(req, res) {
         }
         `;
 
-        console.log("Enviando petición a Gemini...");
+        console.log("Enviando petición a Gemini para grado:", grade);
         const result = await model.generateContent([promptText, ...imageParts]);
         const rawText = result.response.text();
         
