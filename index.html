@@ -367,18 +367,22 @@
         </div>
 
         <!-- 5. Resultados y Opciones Post-Examen -->
-        <div class="screen" id="screen5">
+     <div class="screen" id="screen5">
             <h2>¡Tu examen está listo!</h2>
             <p class="subtitle">Hemos creado preguntas súper divertidas.</p>
             <div class="results-box" id="resultsBox"></div>
             
-            <div class="footer-nav" style="flex-direction: column; gap: 10px;">
+            <div class="footer-nav" style="flex-direction: column; gap: 12px;">
+                <!-- Primera Fila: PDFs -->
                 <div style="display: flex; gap: 10px; width: 100%;">
-                    <button class="btn btn-primary" style="flex:1; background: var(--accent-green); border-color: #4caf50; box-shadow: 0 6px 0px #4caf50; padding: 12px 10px; font-size: 1rem;" onclick="exportQuestionsPDF()">📄 Imprimir Examen</button>
-                    <button class="btn btn-outline" style="flex:1; border-color: #f44336; color: #f44336; box-shadow: 0 6px 0px #f44336; padding: 12px 10px; font-size: 1rem;" onclick="exportAnswersPDF()">🗝️ Hoja de Resultados</button>
+                    <button class="btn btn-primary" style="flex:1; background: var(--accent-green); border-color: #4caf50; box-shadow: 0 6px 0px #4caf50; padding: 12px 5px; font-size: 1rem;" onclick="exportQuestionsPDF()">📄 Imprimir</button>
+                    <button class="btn btn-outline" style="flex:1; border-color: #f44336; color: #f44336; box-shadow: 0 6px 0px #f44336; padding: 12px 5px; font-size: 1rem;" onclick="exportAnswersPDF()">🗝️ Respuestas</button>
                 </div>
-                <button class="btn btn-primary" style="width: 100%; background: var(--accent-blue); border-color: #2980b9; box-shadow: 0 6px 0px #2980b9;" onclick="startTutorReview()">🧠 Revisión con TUKUS Tutor</button>
-                <button class="btn btn-outline" style="width: 100%; border-color: var(--accent-yellow); color: #f57f17; box-shadow: 0 6px 0px var(--accent-yellow);" onclick="handleGenerateQuestions(false)">🔄 ¡Quiero otras preguntas!</button>
+                <!-- Segunda Fila: Tutor y Nuevas Preguntas -->
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <button class="btn btn-primary" style="flex:1; background: var(--accent-blue); border-color: #2980b9; box-shadow: 0 6px 0px #2980b9; padding: 12px 5px; font-size: 1rem;" onclick="startTutorReview()">🧠 TUKUS Tutor</button>
+                    <button class="btn btn-outline" style="flex:1; border-color: var(--accent-yellow); color: #f57f17; box-shadow: 0 6px 0px var(--accent-yellow); padding: 12px 5px; font-size: 1rem;" onclick="handleGenerateQuestions(false)">🔄 Más Preguntas</button>
+                </div>
             </div>
         </div>
 
