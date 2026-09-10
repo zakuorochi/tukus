@@ -16,9 +16,9 @@ export default async function handler(req, res) {
         console.log("Generando lámina gráfica con Meta Muse Image (Runware) a partir de fotos...");
         
         // Prompt adaptado para que Meta Muse lea directamente las fotos de referencia
-        const positivePrompt = `Actúa como un diseñador gráfico educativo experto en material escolar para niños de ${grade || 3}° de primaria. 
+       const positivePrompt = `Actúa como un diseñador gráfico educativo experto en material escolar para niños de ${grade}. 
 Analiza detalladamente las imágenes de los cuadernos de referencia adjuntas y genera una única lámina visual limpia, educativa y atractiva que contenga exactamente 10 ejercicios matemáticos o geométricos basados en estos temas.
-La lámina debe mostrar en la parte superior el área de problemas gráficos claros y, en la parte inferior, un recuadro claramente delimitado con línea punteada (apto para recortar con tijeras) que contenga la clave de respuestas de los ejercicios.`;
+REGLA CRÍTICA: La lámina debe mostrar ÚNICAMENTE los problemas para que el alumno los resuelva. NO incluyas ninguna clave de respuestas, ni soluciones, ni recuadros de corrección en la imagen. Solo los 10 problemas numerados.`;
 
         const taskPayload = {
             taskType: "imageInference",
