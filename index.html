@@ -94,6 +94,13 @@
             z-index: 100;
             box-shadow: 0 4px 0px var(--primary);
         }
+        .disabled-card {
+            opacity: 0.4 !important;
+            pointer-events: none !important;
+            filter: grayscale(100%) !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
         .btn-home:active { transform: translateY(4px); box-shadow: none; }
 
         .screen { display: none; flex: 1; flex-direction: column; justify-content: flex-start; animation: fadeIn 0.4s ease; }
@@ -452,7 +459,7 @@
             if(num === 6) startCamera('videoElementTutor');
         }
 
-        function resetApp() {
+   function resetApp() {
             currentLevel = null;
             currentGrade = null;
             photos = [];
@@ -461,7 +468,11 @@
             generatedQuestionsData = null;
             topicsToReinforce = [];
             
-            document.querySelectorAll('.level-opt, .grade-opt, .type-opt').forEach(el => el.classList.remove('selected'));
+            // Limpiamos selecciones y desbloqueamos todo
+            document.querySelectorAll('.level-opt, .grade-opt, .type-opt').forEach(el => {
+                el.classList.remove('selected');
+                el.classList.remove('disabled-card'); // Liberamos las bloqueadas
+            });
             document.getElementById('gradesPrimaria').style.display = 'none';
             document.getElementById('gradesSecundaria').style.display = 'none';
             document.getElementById('btnGrade').disabled = true;
@@ -494,18 +505,59 @@
             document.getElementById('btnGrade').disabled = false;
         }
 
-        function toggleType(type, el) {
-            const idx = selectedTypes.indexOf(type);
-            if(idx > -1) {
-                selectedTypes.splice(idx, 1);
-                el.classList.remove('selected');
+      function toggleType(type, el) {
+            const isGraphic = type === 'Ejercicios Gráficos (IA)';
+            const isCurrentlySelected = selectedTypes.includes(type);
+
+            if (isGraphic) {
+                // Si el usuario hace clic en Ejercicios Gráficos
+                if (isCurrentlySelected) {
+                    // Si ya estaba marcado, lo desmarcamos y liberamos las demás
+                    selectedTypes = [];
+                    el.classList.remove('selected');
+                    document.querySelectorAll('.type-opt:not(.special)').forEach(c => c.classList.remove('disabled-card'));
+                } else {
+                    // Si lo marca, bloqueamos las 4 opciones de texto
+                    selectedTypes = [type];
+                    document.querySelectorAll('.type-opt').forEach(c => {
+                        c.classList.remove('selected');
+                        if (!c.classList.contains('special')) {
+                            c.classList.add('disabled-card');
+                        }
+                    });
+                    el.classList.add('selected');
+                }
             } else {
-                selectedTypes.push(type);
-                el.classList.add('selected');
+                // Si el usuario hace clic en una opción de Texto normal (Opción Múltiple, etc.)
+                if (isCurrentlySelected) {
+                    // Desmarcar
+                    const idx = selectedTypes.indexOf(type);
+                    selectedTypes.splice(idx, 1);
+                    el.classList.remove('selected');
+                    
+                    // Si ya no queda ninguna de texto marcada, desbloqueamos la opción de gráficos
+                    if (selectedTypes.length === 0) {
+                        document.querySelector('.type-opt.special').classList.remove('disabled-card');
+                    }
+                } else {
+                    // Marcar nueva opción de texto
+                    selectedTypes.push(type);
+                    el.classList.add('selected');
+                    
+                    // Bloqueamos instantáneamente la tarjeta especial de gráficos
+                    const specialCard = document.querySelector('.type-opt.special');
+                    specialCard.classList.remove('selected');
+                    specialCard.classList.add('disabled-card');
+                    
+                    // Por seguridad, aseguramos que "Ejercicios Gráficos" no esté en el array
+                    const graphicIdx = selectedTypes.indexOf('Ejercicios Gráficos (IA)');
+                    if (graphicIdx > -1) selectedTypes.splice(graphicIdx, 1);
+                }
             }
+            
+            // Habilitar el botón de generar solo si hay algo seleccionado
             document.getElementById('btnGenerate').disabled = selectedTypes.length === 0;
         }
-
         async function startCamera(videoId) {
             const videoObj = document.getElementById(videoId);
             try {
