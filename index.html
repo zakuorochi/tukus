@@ -647,29 +647,45 @@
                     </div>`;
                 box.appendChild(imgBox);
                 
-                try {
-                    const response = await fetch('/api/generate-image', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    const imgData = await response.json();
-                    
-                    if (response.ok && imgData.success && imgData.imageUrl) {
-                        generatedQuestionsData = { isGraphicSheet: true, imageUrl: imgData.imageUrl };
-                        imgBox.innerHTML = `
-                            <div style="text-align:center; margin-bottom: 25px;">
-                                <p style="color: var(--accent-green); font-weight: bold; margin-bottom: 12px; font-size: 1.1rem;">✨ ¡Lámina TUKUS lista para imprimir y recortar!</p>
-                                <img src="${imgData.imageUrl}" style="max-width: 100%; border-radius: 16px; border: 4px solid var(--primary); box-shadow: 0 6px 15px rgba(0,0,0,0.15);">
-                            </div>`;
-                    } else {
-                        imgBox.innerHTML = `<div style="text-align:center; padding:20px; background:#fef2f2; border-radius:12px;"><span style="color:#ef4444; font-weight:bold;">❌ Error al generar la lámina.</span></div>`;
+         // DENTRO DE handleGenerateQuestions (Reemplaza el bloque de Muse)
+        try {
+            const response = await fetch('/api/generate-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const imgData = await response.json();
+            
+            if (response.ok && imgData.success && imgData.imageUrl) {
+                // 1. Mostramos la imagen de inmediato al usuario
+                generatedQuestionsData = { isGraphicSheet: true, imageUrl: imgData.imageUrl, answers: [] };
+                imgBox.innerHTML = `
+                    <div style="text-align:center; margin-bottom: 25px;">
+                        <p style="color: var(--accent-green); font-weight: bold; margin-bottom: 12px; font-size: 1.1rem;">✨ ¡Lámina TUKUS lista para imprimir!</p>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px;">Calculando respuestas para el maestro en segundo plano 🧠...</p>
+                        <img src="${imgData.imageUrl}" style="max-width: 100%; border-radius: 16px; border: 4px solid var(--primary); box-shadow: 0 6px 15px rgba(0,0,0,0.15);">
+                    </div>`;
+
+                // 2. Mandamos a Gemini a resolver la imagen en segundo plano
+                fetch('/api/solve-graphic-exam', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageUrl: imgData.imageUrl, grade: currentGrade })
+                })
+                .then(res => res.json())
+                .then(solveData => {
+                    if (solveData.success) {
+                        generatedQuestionsData.answers = solveData.answers;
                     }
-                } catch (err) {
-                    imgBox.innerHTML = `<div style="text-align:center; padding:20px; background:#fef2f2; border-radius:12px;"><span style="color:#ef4444; font-weight:bold;">❌ Error de conexión al conectar con IA.</span></div>`;
-                }
-                return; 
+                }).catch(e => console.error("Error al resolver la lámina", e));
+
+            } else {
+                imgBox.innerHTML = `<div style="text-align:center; padding:20px; background:#fef2f2; border-radius:12px;"><span style="color:#ef4444; font-weight:bold;">❌ Error al generar la lámina.</span></div>`;
+            }
+        } catch (err) {
+            imgBox.innerHTML = `<div style="text-align:center; padding:20px; background:#fef2f2; border-radius:12px;"><span style="color:#ef4444; font-weight:bold;">❌ Error de conexión al conectar con IA.</span></div>`;
+        }
+        return;
             }
 
             try {
@@ -853,8 +869,15 @@
             showLoading(false);
         }
 
-        function exportAnswersPDF() {
-            if(!generatedQuestionsData || generatedQuestionsData.isGraphicSheet) return;
+      function exportAnswersPDF() {
+            if(!generatedQuestionsData) return;
+            
+            // Validar si es gráfico y aún no se resuelve
+            if (generatedQuestionsData.isGraphicSheet && (!generatedQuestionsData.answers || generatedQuestionsData.answers.length === 0)) {
+                alert("TUKUS todavía está calculando las respuestas matemáticas de la imagen. Intenta en un par de segundos.");
+                return;
+            }
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
@@ -871,12 +894,26 @@
             doc.setTextColor(30, 41, 59);
             let y = 35;
             
-            generatedQuestionsData.forEach((q, index) => {
+            // Definir qué array leer (el normal o el de las respuestas de la imagen)
+            const questionsArray = generatedQuestionsData.isGraphicSheet 
+                ? generatedQuestionsData.answers 
+                : generatedQuestionsData;
+
+            questionsArray.forEach((q, index) => {
                 if(y > 280) { doc.addPage(); y = 20; }
-                const shortStatement = q.statement.length > 80 ? q.statement.substring(0, 80) + "..." : q.statement;
-                doc.setFont(undefined, 'bold');
-                doc.text(`${index + 1}. ${shortStatement}`, 15, y);
-                y += 5;
+                
+                // Si es gráfico, no hay "statement", solo respuesta
+                if (!generatedQuestionsData.isGraphicSheet) {
+                    const shortStatement = q.statement.length > 80 ? q.statement.substring(0, 80) + "..." : q.statement;
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`${index + 1}. ${shortStatement}`, 15, y);
+                    y += 5;
+                } else {
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`Problema de la lámina #${index + 1}`, 15, y);
+                    y += 5;
+                }
+                
                 doc.setFont(undefined, 'normal');
                 doc.setTextColor(76, 175, 80); 
                 const splitAnswer = doc.splitTextToSize(`Rpta: ${q.answer}`, 170);
